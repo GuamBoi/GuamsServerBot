@@ -1,0 +1,2 @@
+You flipped a coin an got Heads!
+You flipped a coin ang got Tails
