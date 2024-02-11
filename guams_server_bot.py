@@ -18,7 +18,7 @@ def load_random_messages(filepath):
         return []  # Return empty list if file not found
 
 # Define file paths
-base_path = '/home/kali/GuamsServerBot/'  # Define base path for the bot files
+base_path = 'YOUR_FILEPATHE_GOES_HERE'  # Define base path for the bot message files
 message_folder = 'Bot Messages/'  # Define folder containing message files
 
 # Load random messages from the D4 and D20 text files
