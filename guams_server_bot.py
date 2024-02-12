@@ -84,6 +84,7 @@ async def commands(ctx):  # Command function to display available server command
     embed.add_field(name=":coin: !coinflip", value="Flips a coin", inline=False)  # Add field for coin flip command
     embed.add_field(name=":ballot_box: !suggest", value="Creates a Server Suggestion", inline=False)  # Add field for suggestion command
     embed.add_field(name=":bar_chart: !poll", value="Creates a Server Poll", inline=False)  # Add field for poll command
+    embed.add_field(name=":tickets: !ticket", value="Creates a New Private Ticket with the Server Mods", inline=False)  # Add field for ticket command
     await ctx.send(embed=embed)  # Send the embed message with server commands
 
 # Command to display available dice rolling commands
@@ -98,7 +99,7 @@ async def dice_commands(ctx):  # Command function to display available dice roll
     embed.add_field(name=":game_die: !d20", value="Rolls a D20 dice", inline=False)  # Add field for D20 command
     await ctx.send(embed=embed)  # Send the embed message with dice commands
 
-# Command to create a suggestion
+# Command to create a New Server Suggestion
 @client.command()  # Decorator to define a command
 async def suggest(ctx, *, question):  # Command function to create a suggestion
     embed = discord.Embed(title="Server Suggestion", description=question, color=discord.Color.red())  # Create a suggestion embed
