@@ -1,0 +1,2 @@
+Welcome {member_mention} to the server! We're glad to have you here.
+Hey there {member_mention}, welcome to the community!
