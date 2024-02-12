@@ -1,237 +1,142 @@
-# Importing necessary libraries
-import discord  # Import the Discord library
-from discord.ext import commands  # Import commands extension for Discord
-import random  # Import the random module for generating random numbers
-import logging  # Import logging module for logging messages
-import os  # Import os module for interacting with the operating system
+#Import List
+import discord
+from discord.ext import commands
+import random
+import logging
+import os
 import asyncio
 
-# Setting up logging configuration
-logging.basicConfig(level=logging.INFO)  # Configure logging to display INFO level messages
+# Intents
+intents = discord.Intents.all()
+intents.voice_states = True
 
-# Function to load random messages from a file
-def load_random_messages(filepath):
-    try:
-        with open(filepath, 'r') as file:  # Open the file in read mode
-            messages = file.readlines()  # Read lines from the file
-        return [message.strip() for message in messages]  # Return a list of messages with leading/trailing whitespace removed
-    except FileNotFoundError:
-        logging.error(f"File '{filepath}' not found.")  # Log an error if the file is not found
-        return []  # Return an empty list if the file is not found
+#Command Prefix
+client = commands.Bot(command_prefix='!', intents=intents)
 
-# Setting base path and message folder
-base_path = '/home/guam/GuamsServerBot/'  # Specify the base path where the bot files are located
-message_folder = 'Bot Messages/'  # Specify the folder containing bot messages
+# Define Rolles
+silenced_role_name = '!mute'  # Name of the role to assign
 
-# Loading messages for different dice types
-D4_messages = load_random_messages(os.path.join(base_path, message_folder, 'D4_messages.txt'))  # Load messages for a 4-sided dice
-D6_messages = load_random_messages(os.path.join(base_path, message_folder, 'D6_messages.txt'))  # Load messages for a 6-sided dice
-D8_messages = load_random_messages(os.path.join(base_path, message_folder, 'D8_messages.txt'))  # Load messages for an 8-sided dice
-D10_messages = load_random_messages(os.path.join(base_path, message_folder, 'D10_messages.txt'))  # Load messages for a 10-sided dice
-D12_messages = load_random_messages(os.path.join(base_path, message_folder, 'D12_messages.txt'))  # Load messages for a 12-sided dice
-D20_messages = load_random_messages(os.path.join(base_path, message_folder, 'D20_messages.txt'))  # Load messages for a 20-sided dice
-coinflip_messages = load_random_messages(os.path.join(base_path, message_folder, 'coinflip.txt'))  # Load messages for a coin flip
-welcome_messages = load_random_messages(os.path.join(base_path, message_folder, 'welcome_messages.txt'))  # Load welcome messages for new members
-goodbye_messages = load_random_messages(os.path.join(base_path, message_folder, 'goodbye_messages.txt'))  # Load goodbye messages for leaving members
-
-# Setting up Discord intents
-intents = discord.Intents.all()  # Create a Discord Intents object with all intents enabled
-client = commands.Bot(command_prefix='!', intents=intents)  # Create a Bot instance with specified command prefix and intents
-
-# Asynchronous function to send embeds
-async def send_embed(ctx, title, description, color=discord.Color.red(), thumbnail=None, fields=None):
-    embed = discord.Embed(title=title, description=description, color=color)  # Create an embed with specified title, description, and color
-    if ctx.author.avatar:  # Check if author has an avatar
-        embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)  # Set author's name and avatar as embed author
-    if thumbnail:  # Check if thumbnail URL is provided
-        embed.set_thumbnail(url=thumbnail)  # Set thumbnail for embed
-    if fields:  # Check if fields are provided
-        for name, value, inline in fields:  # Iterate over fields
-            embed.add_field(name=name, value=value, inline=inline)  # Add each field to the embed
-    return await ctx.send(embed=embed)  # Send the embed message to the channel
-
-# Event handler for bot's readiness
+#Bot Boot Info / Playing Title
 @client.event
 async def on_ready():
-    logging.info('Hello World! It is a great day to be Alive!')  # Log a message indicating the bot is ready
-    command_info = "Type '!commands' to see available commands."  # Information about available commands
-    await client.change_presence(activity=discord.Game(name=command_info))  # Set bot's presence to the command information
+    logging.info("Hello World! It's a Great Day to be Alive!")
+    command_info = "Type '!commands' to see available commands."
+    await client.change_presence(activity=discord.Game(name=command_info))
 
-# Event handler for new member joining
+# Logging Configuration ???
+logging.basicConfig(level=logging.INFO)
+
+# Loading Random Messages Function
+def load_random_messages(filepath):
+    try:
+        with open(filepath, 'r') as file:
+            messages = file.readlines()
+        return [message.strip() for message in messages]
+    except FileNotFoundError:
+        logging.error(f"File '{filepath}' not found.")
+        return []
+
+# Bot Path Info
+base_path = '/home/guam/GuamsServerBot/'
+message_folder = 'Bot Messages/'
+ticket_messages = load_random_messages(os.path.join(base_path, message_folder, 'ticket_messages.txt'))
+timer_messages = load_random_messages(os.path.join(base_path, message_folder, 'timer_messages.txt'))
+ticket_logs_folder = '/home/guam/GuamsServerBot/Ticket Logs/'
+
+# Dice Message Paths
+D4_messages = load_random_messages(os.path.join(base_path, message_folder, 'D4_messages.txt'))
+D6_messages = load_random_messages(os.path.join(base_path, message_folder, 'D6_messages.txt'))
+D8_messages = load_random_messages(os.path.join(base_path, message_folder, 'D8_messages.txt'))
+D10_messages = load_random_messages(os.path.join(base_path, message_folder, 'D10_messages.txt'))
+D12_messages = load_random_messages(os.path.join(base_path, message_folder, 'D12_messages.txt'))
+D20_messages = load_random_messages(os.path.join(base_path, message_folder, 'D20_messages.txt'))
+coinflip_messages = load_random_messages(os.path.join(base_path, message_folder, 'coinflip.txt'))
+welcome_messages = load_random_messages(os.path.join(base_path, message_folder, 'welcome_messages.txt'))
+goodbye_messages = load_random_messages(os.path.join(base_path, message_folder, 'goodbye_messages.txt'))
+
+# Embed Creator
+async def send_embed(ctx, title, description, color=discord.Color.red(), thumbnail=None, fields=None):
+    embed = discord.Embed(title=title, description=description, color=color)
+    if ctx.author.avatar:
+        embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
+    if thumbnail:
+        embed.set_thumbnail(url=thumbnail)
+    if fields:
+        for name, value, inline in fields:
+            embed.add_field(name=name, value=value, inline=inline)
+    return await ctx.send(embed=embed)
+
+# Read voice channel IDs from the file
+with open('silenced_servers.txt', 'r') as f:
+    target_voice_channel_ids = [line.strip() for line in f]
+
+# Auto Give @Silenced roll when joining a Voice Channel
+@client.event
+async def on_voice_state_update(member, before, after):
+    guild = member.guild
+    silenced_role = discord.utils.get(guild.roles, name=silenced_role_name)
+
+    if silenced_role is None:
+        print(f'Role "{silenced_role_name}" not found')
+        return
+
+    for channel_id in target_voice_channel_ids:
+        target_voice_channel = guild.get_channel(int(channel_id))
+
+        if after.channel and after.channel.id == int(channel_id):
+            await member.add_roles(silenced_role)
+            print(f'Assigned {silenced_role_name} role to {member.display_name} in voice channel {after.channel.name}')
+        elif before.channel and before.channel.id == int(channel_id):
+            await member.remove_roles(silenced_role)
+            print(f'Removed {silenced_role_name} role from {member.display_name} in voice channel {before.channel.name}')
+
+# Welcome Messages
 @client.event
 async def on_member_join(member):
-    welcome_channel_id = 1036760459161911366  # Replace with your "Welcome" channel ID
-    welcome_message = random.choice(welcome_messages).format(member_mention=member.mention)  # Choose a random welcome message and mention the new member
-    welcome_channel = client.get_channel(welcome_channel_id)  # Get the welcome channel
-    if welcome_channel:  # Check if welcome channel exists
-        embed = discord.Embed(title="Welcome to the Server!", description=welcome_message, color=discord.Color.red())  # Create a welcome embed
-        await welcome_channel.send(embed=embed)  # Send the welcome message to the channel
+    welcome_channel_id = 1036760459161911366
+    welcome_message = random.choice(welcome_messages).format(member_mention=member.mention)
+    welcome_channel = client.get_channel(welcome_channel_id)
+    if welcome_channel:
+        embed = discord.Embed(title="Welcome to the Server!", description=welcome_message, color=discord.Color.red())
+        await welcome_channel.send(embed=embed)
 
-# Event handler for member leaving
+# Goodbye Messages
 @client.event
 async def on_member_remove(member):
-    goodbye_channel_id = 1206374744719626361  # Replace with your "Goodbye" channel ID
-    goodbye_message = random.choice(goodbye_messages).format(member_mention=member.mention)  # Choose a random goodbye message and mention the leaving member
-    goodbye_channel = client.get_channel(goodbye_channel_id)  # Get the goodbye channel
-    if goodbye_channel:  # Check if goodbye channel exists
-        embed = discord.Embed(title="Goodbye!", description=goodbye_message, color=discord.Color.red())  # Create a goodbye embed
-        await goodbye_channel.send(embed=embed)  # Send the goodbye message to the channel
+    goodbye_channel_id = 1206374744719626361
+    goodbye_message = random.choice(goodbye_messages).format(member_mention=member.mention)
+    goodbye_channel = client.get_channel(goodbye_channel_id)
+    if goodbye_channel:
+        embed = discord.Embed(title="Goodbye!", description=goodbye_message, color=discord.Color.red())
+        await goodbye_channel.send(embed=embed)
 
-# Command to display available server commands
-@client.command()  # Decorator to define a command
-async def commands(ctx):  # Command function to display available server commands
-    embed = discord.Embed(title="Server Commands", color=discord.Color.red())  # Create an embed for server commands
-    embed.add_field(name=":game_die: !dice_commands", value="Lists all the dice commands", inline=False)  # Add field for dice commands
-    embed.add_field(name=":coin: !coinflip", value="Flips a coin", inline=False)  # Add field for coin flip command
-    embed.add_field(name=":ballot_box: !suggest", value="Creates a Server Suggestion", inline=False)  # Add field for suggestion command
-    embed.add_field(name=":bar_chart: !poll", value="Creates a Server Poll", inline=False)  # Add field for poll command
-    embed.add_field(name=":tickets: !ticket", value="Creates a New Private Ticket with the Server Mods", inline=False)  # Add field for ticket command
-    await ctx.send(embed=embed)  # Send the embed message with server commands
-
-# Command to display available dice rolling commands
-@client.command()  # Decorator to define a command
-async def dice_commands(ctx):  # Command function to display available dice rolling commands
-    embed = discord.Embed(title="Dice Commands", color=discord.Color.red())  # Create an embed for dice commands
-    embed.add_field(name=":game_die: !d4", value="Rolls a D4 Dice", inline=False)  # Add field for D4 command
-    embed.add_field(name=":game_die: !roll", value="Rolls a normal D6 dice", inline=False)  # Add field for roll command
-    embed.add_field(name=":game_die: !d8", value="Rolls a D8 dice", inline=False)  # Add field for D8 command
-    embed.add_field(name=":game_die: !d10", value="Rolls a D10 dice", inline=False)  # Add field for D10 command
-    embed.add_field(name=":game_die: !d12", value="Rolls a D12 dice", inline=False)  # Add field for D12 command
-    embed.add_field(name=":game_die: !d20", value="Rolls a D20 dice", inline=False)  # Add field for D20 command
-    await ctx.send(embed=embed)  # Send the embed message with dice commands
-
-# Command to create a New Server Suggestion
-@client.command()  # Decorator to define a command
-async def suggest(ctx, *, question):  # Command function to create a suggestion
-    embed = discord.Embed(title="Server Suggestion", description=question, color=discord.Color.red())  # Create a suggestion embed
-    embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)  # Set author's name and avatar
-    embed.add_field(name="Everyone can vote!", value="👍 Yes    👎 No", inline=False)  # Add voting options
-    message = await send_embed(ctx, "Server Suggestion", question, thumbnail="https://images.emojiterra.com/twitter/v13.1/512px/1f5f3.png", fields=[("Everyone can Vote!", "👍 Yes    👎 No", False)])  # Send the suggestion as an embed
-    await message.add_reaction('👍')  # Add thumbs-up reaction
-    await message.add_reaction('👎')  # Add thumbs-down reaction
-
-# Command to create a New Server Poll
-@client.command()  # Decorator to define a command
-async def poll(ctx, *, question):  # Command function to create a new server poll
-    embed = discord.Embed(title="Server Suggestion", description=question, color=discord.Color.red())  # Create a poll embed
-    embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)  # Set author's name and avatar
-    embed.add_field(name="Everyone can vote!", value="👍 Yes    👎 No", inline=False)  # Add voting options
-    message = await send_embed(ctx, "Server Poll", question, thumbnail="https://images.emojiterra.com/google/noto-emoji/unicode-15.1/color/1024px/1f4ca.png", fields=[("Everyone can Vote!", "👍 Yes    👎 No", False)])  # Send the poll as an embed
-    await message.add_reaction('👍')  # Add thumbs-up reaction
-    await message.add_reaction('👎')  # Add thumbs-down reaction
-
-# Load ticket messages
-ticket_messages = load_random_messages(os.path.join(base_path, message_folder, 'ticket_messages.txt'))
-
-# Command to create a new ticket
-@client.command()  # Decorator to define a command
-async def ticket(ctx):  # Command function to create a new ticket
-    category = discord.utils.get(ctx.guild.categories, name="Tickets")  # Get the category named "Tickets"
-    if not category:  # If "Tickets" category doesn't exist
-        category = await ctx.guild.create_category("Tickets")  # Create "Tickets" category
-
-    # Check if the user already has an open ticket
-    for channel in category.channels:  # Iterate over channels in the category
-        if channel.name.startswith("Ticket-") and channel.topic == str(ctx.author.id):  # If channel is a ticket and topic matches user ID
-            await ctx.author.send("You already have an open ticket.")  # Send a message to the user
-            return
-
-    # Generate ticket channel name
-    ticket_channel_name = f"Ticket-{ctx.author.name.replace(' ', '-')}"
-
-    overwrites = {  # Define permission overwrites for the ticket channel
-        ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
-        ctx.author: discord.PermissionOverwrite(read_messages=True, send_messages=True),
-        ctx.guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True)
-    }
-
-    ticket_channel = await category.create_text_channel(ticket_channel_name, overwrites=overwrites)  # Create the ticket channel
-    ticket_channel.topic = str(ctx.author.id)  # Set the topic to user's ID to track their ticket
-
-    # Send a random ticket message to the new ticket channel
-    if ticket_messages:  # If ticket messages exist
-        ticket_message = random.choice(ticket_messages)  # Choose a random ticket message
-        await ticket_channel.send(ticket_message.format(user_mention=ctx.author.mention))  # Send the ticket message
-
-    await ctx.message.delete()  # Delete the command message
-
-# Command to delete a ticket
-@client.command()  # Decorator to define a command
-async def delete_ticket(ctx):  # Command function to delete a ticket
-    if isinstance(ctx.channel, discord.TextChannel) and ctx.channel.category.name == "Tickets":  # If command is run in a ticket channel
-        await ctx.channel.delete()  # Delete the ticket channel
-    else:
-        await ctx.send("This command can only be used in a ticket channel.")  # Send a message if command is not used in a ticket channel
-
-ticket_logs_folder = '/home/guam/GuamsServerBot/Ticket Logs/'  # Specify the folder to store ticket logs
-
-# Command to log a ticket conversation
-@client.command()  # Decorator to define a command
-async def log_ticket(ctx):  # Command function to log a ticket conversation
-    if isinstance(ctx.channel, discord.TextChannel) and ctx.channel.category.name == "Tickets":  # If command is run in a ticket channel
-        # Create the Ticket Logs folder if it doesn't exist
-        if not os.path.exists(ticket_logs_folder):  # If Ticket Logs folder doesn't exist
-            os.makedirs(ticket_logs_folder)  # Create Ticket Logs folder
-
-        # Generate the filename
-        filename = f"{ctx.channel.name}.txt"  # Generate filename based on channel name
-        filepath = os.path.join(ticket_logs_folder, filename)  # Generate full file path
-
-        # Get the entire conversation from the ticket channel
-        messages = []  # Initialize a list to store messages
-        async for message in ctx.channel.history(limit=None):  # Iterate over channel history
-            messages.append(f"{message.created_at} - {message.author.display_name}: {message.content}")  # Append message to the list
-
-        # Reverse the order of messages
-        messages.reverse()  # Reverse the list of messages
-
-        # Write the conversation to the file
-        with open(filepath, 'w') as file:  # Open file in write mode
-            file.write("\n".join(messages))  # Write messages to the file
-
-        await ctx.send(f"This conversation has been logged for further review.")  # Send a confirmation message
-    else:
-        await ctx.send("This command can only be used in a ticket channel.")  # Send a message if command is not used in a ticket channel
-
-# Load messages for timer
-timer_messages = load_random_messages(os.path.join(base_path, message_folder, 'timer_messages.txt'))
-
-# Timer Command
+#Command List
 @client.command()
-async def timer(ctx, time_duration):
-    try:
-        # Splitting time_duration into hours and minutes
-        hours, minutes = map(int, time_duration.split(':'))
-        # Converting hours and minutes into seconds
-        time_in_seconds = (hours * 3600) + (minutes * 60)
+async def commands(ctx):
+    embed = discord.Embed(title="Server Commands", color=discord.Color.red())
+    embed.add_field(name=":ballot_box: !suggest <your suggestion>", value="Creates a Server Suggestion", inline=False)
+    embed.add_field(name=":bar_chart: !poll <poll question>", value="Creates a Server Poll", inline=False)
+    embed.add_field(name=":tickets: !ticket", value="Creates a New Private Ticket with the Server Mods", inline=False)
+    embed.add_field(name=":game_die: !dice_commands", value="Lists all the dice commands", inline=False)
+    embed.add_field(name=":coin: !coinflip", value="Flips a coin", inline=False)
+    embed.add_field(name=":alarm_clock: !timer <HH:MM>", value="Set a timer. Make sure your time amount matches the code format!", inline=False)
+    await ctx.send(embed=embed)
+    await ctx.message.delete()
 
-        # Create an embed for the confirmation message
-        embed = discord.Embed(title="Timer Set", color=discord.Color.green())
-        embed.add_field(name="Duration", value=f"{hours} hours and {minutes} minutes", inline=False)
-        confirmation_message = await ctx.send(embed=embed)
+# Dice Command List
+@client.command()
+async def dice_commands(ctx):
+    embed = discord.Embed(title="Dice Commands", color=discord.Color.red())
+    embed.add_field(name=":game_die: !d4", value="Rolls a D4 Dice", inline=False)
+    embed.add_field(name=":game_die: !roll", value="Rolls a normal D6 dice", inline=False)
+    embed.add_field(name=":game_die: !d8", value="Rolls a D8 dice", inline=False)
+    embed.add_field(name=":game_die: !d10", value="Rolls a D10 dice", inline=False)
+    embed.add_field(name=":game_die: !d12", value="Rolls a D12 dice", inline=False)
+    embed.add_field(name=":game_die: !d20", value="Rolls a D20 dice", inline=False)
+    await ctx.send(embed=embed)
+    await ctx.message.delete()
 
-        # Waiting for the specified time
-        await asyncio.sleep(time_in_seconds)
-
-        # Sending notification after timer completes
-        if timer_messages:
-            timer_message = random.choice(timer_messages)
-            # Mention the user who activated the command
-            user_mention = ctx.author.mention
-            timer_message = timer_message.replace("{user_mention}", user_mention)
-            await send_embed(ctx, "Timer Notification", timer_message, color=discord.Color.red())
-
-        # Delete the confirmation message after the timer notification is sent
-        await confirmation_message.delete()
-    except ValueError:
-        await ctx.send("Invalid time duration format. Please provide the time in the format 'HH:MM'.")
-
-# Read timer messages from a text file
-timer_messages_filepath = os.path.join(base_path, message_folder, 'timer_messages.txt')
-with open(timer_messages_filepath, 'r') as file:
-    timer_messages = [line.strip() for line in file]
-
-# Command functions for rolling dice
+# Dice Commands
 @client.command()
 async def d4(ctx):
     if D4_messages:
@@ -239,6 +144,7 @@ async def d4(ctx):
         await send_embed(ctx, "D4 Roll", f"🎲 {response}")
     else:
         await send_embed(ctx, "D4 Roll", "No messages available for rolling a D4.")
+    await ctx.message.delete()
 
 @client.command()
 async def roll(ctx):
@@ -247,6 +153,7 @@ async def roll(ctx):
         await send_embed(ctx, "D6 Roll", f"🎲 {response}")
     else:
         await send_embed(ctx, "D6 Roll", "No messages available for rolling a D6.")
+    await ctx.message.delete()
 
 @client.command()
 async def d8(ctx):
@@ -255,6 +162,7 @@ async def d8(ctx):
         await send_embed(ctx, "D8 Roll", f"🎲 {response}")
     else:
         await send_embed(ctx, "D8 Roll", "No messages available for rolling a D8.")
+    await ctx.message.delete()
 
 @client.command()
 async def d10(ctx):
@@ -263,6 +171,7 @@ async def d10(ctx):
         await send_embed(ctx, "D10 Roll", f"🎲 {response}")
     else:
         await send_embed(ctx, "D10 Roll", "No messages available for rolling a D10.")
+    await ctx.message.delete()
 
 @client.command()
 async def d12(ctx):
@@ -271,6 +180,7 @@ async def d12(ctx):
         await send_embed(ctx, "D12 Roll", f"🎲 {response}")
     else:
         await send_embed(ctx, "D12 Roll", "No messages available for rolling a D12.")
+    await ctx.message.delete()
 
 @client.command()
 async def d20(ctx):
@@ -279,8 +189,9 @@ async def d20(ctx):
         await send_embed(ctx, "D20 Roll", f"🎲 {response}")
     else:
         await send_embed(ctx, "D20 Roll", "No messages available for rolling a D20.")
+    await ctx.message.delete()
 
-# Coin Flip Command
+# Coinflip Command
 @client.command()
 async def coinflip(ctx):
     if coinflip_messages:
@@ -288,6 +199,118 @@ async def coinflip(ctx):
         await send_embed(ctx, "Coin Flip", f":coin: {response}")
     else:
         await send_embed(ctx, "Coin Flip", "No messages available for coin flipping.")
+    await ctx.message.delete()
 
-# Run the Discord bot with your token
-client.run('YOUR_DISCORD_BOT_TOKEN')  # Run the bot with your token. Make sure to replace YOUR_DISCORD_BOT_TOKEN with your token.
+# Create Suggestions Command
+@client.command()
+async def suggest(ctx, *, question):
+    embed = discord.Embed(title="Server Suggestion", description=question, color=discord.Color.red())
+    embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
+    embed.add_field(name="Everyone can vote!", value="👍 Yes    👎 No", inline=False)
+    message = await send_embed(ctx, "Server Suggestion", question, thumbnail="https://images.emojiterra.com/twitter/v13.1/512px/1f5f3.png", fields=[("Everyone can Vote!", "👍 Yes    👎 No", False)])
+    await message.add_reaction('👍')
+    await message.add_reaction('👎')
+    await ctx.message.delete()
+
+# Create Polls Command
+@client.command()
+async def poll(ctx, *, question):
+    embed = discord.Embed(title="Server Suggestion", description=question, color=discord.Color.red())
+    embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
+    embed.add_field(name="Everyone can vote!", value="👍 Yes    👎 No", inline=False)
+    message = await send_embed(ctx, "Server Poll", question, thumbnail="https://images.emojiterra.com/google/noto-emoji/unicode-15.1/color/1024px/1f4ca.png", fields=[("Everyone can Vote!", "👍 Yes    👎 No", False)])
+    await message.add_reaction('👍')
+    await message.add_reaction('👎')
+    await ctx.message.delete()
+
+# Create Tickets Command
+@client.command()
+async def ticket(ctx):
+    category = discord.utils.get(ctx.guild.categories, name="Tickets")
+    if not category:
+        category = await ctx.guild.create_category("Tickets")
+
+    for channel in category.channels:
+        if channel.name.startswith("Ticket-") and channel.topic == str(ctx.author.id):
+            await ctx.author.send("You already have an open ticket.")
+            return
+
+    ticket_channel_name = f"Ticket-{ctx.author.name.replace(' ', '-')}"
+
+    overwrites = {
+        ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+        ctx.author: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+        ctx.guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True)
+    }
+
+    ticket_channel = await category.create_text_channel(ticket_channel_name, overwrites=overwrites)
+    ticket_channel.topic = str(ctx.author.id)
+
+    if ticket_messages:
+        ticket_message = random.choice(ticket_messages)
+        await ticket_channel.send(ticket_message.format(user_mention=ctx.author.mention))
+
+    await ctx.message.delete()
+
+# Delete Ticket Command
+@client.command()
+async def delete_ticket(ctx):
+    if isinstance(ctx.channel, discord.TextChannel) and ctx.channel.category.name == "Tickets":
+        await ctx.channel.delete()
+    else:
+        await ctx.send("This command can only be used in a ticket channel.")
+
+# Log Tocket Command
+@client.command()
+async def log_ticket(ctx):
+    if isinstance(ctx.channel, discord.TextChannel) and ctx.channel.category.name == "Tickets":
+        if not os.path.exists(ticket_logs_folder):
+            os.makedirs(ticket_logs_folder)
+
+        filename = f"{ctx.channel.name}.txt"
+        filepath = os.path.join(ticket_logs_folder, filename)
+
+        messages = []
+        async for message in ctx.channel.history(limit=None):
+            messages.append(f"{message.created_at} - {message.author.display_name}: {message.content}")
+
+        messages.reverse()
+
+        with open(filepath, 'w') as file:
+            file.write("\n".join(messages))
+
+        await ctx.send(f"This conversation has been logged by a mod.")
+    else:
+        await ctx.send("This command can only be used in a ticket channel.")
+    await ctx.message.delete()
+
+# Timer Command
+@client.command()
+async def timer(ctx, time_duration):
+    try:
+        hours, minutes = map(int, time_duration.split(':'))
+        time_in_seconds = (hours * 3600) + (minutes * 60)
+
+        embed = discord.Embed(title="Timer Set", color=discord.Color.green())
+        embed.add_field(name="Duration", value=f"{hours} hours and {minutes} minutes", inline=False)
+        confirmation_message = await ctx.send(embed=embed)
+        await ctx.message.delete()
+
+        await asyncio.sleep(time_in_seconds)
+
+        if timer_messages:
+            timer_message = random.choice(timer_messages)
+            user_mention = ctx.author.mention
+            timer_message = timer_message.replace("{user_mention}", user_mention)
+            await send_embed(ctx, "Timer Notification", timer_message, color=discord.Color.red())
+
+        await confirmation_message.delete()
+    except ValueError:
+        await ctx.send("Invalid time duration format. Please provide the time in the format 'HH:MM'.")
+        
+timer_messages_filepath = os.path.join(base_path, message_folder, 'timer_messages.txt')
+with open(timer_messages_filepath, 'r') as file:
+    timer_messages = [line.strip() for line in file]
+
+# Bot Token
+client.run('YOUR_DISCORD_BOT_TOKEN')
