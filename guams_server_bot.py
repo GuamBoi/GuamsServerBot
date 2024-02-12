@@ -19,7 +19,7 @@ def load_random_messages(filepath):
         return []
 
 # Setting base path and message folder
-base_path = '/home/kali/GuamsServerBot/'  # Specify your base path here
+base_path = '/home/guam/GuamsServerBot/'  # Specify your base path here
 message_folder = 'Bot Messages/'
 
 # Loading messages for different dice types
