@@ -1,0 +1,5 @@
+Thank you {user_mention} for reaching out to us. We'll assist you shortly.
+Please describe your issue or question in detail, {user_mention}.
+Our support team will do their best to help you as soon as possible, {user_mention}.
+We appreciate your patience while we look into this for you, {user_mention}.
+Feel free to provide any additional information that might help us resolve your issue faster, {user_mention}.
