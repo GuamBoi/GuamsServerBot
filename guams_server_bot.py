@@ -4,6 +4,7 @@ from discord.ext import commands  # Import commands extension for Discord
 import random  # Import the random module for generating random numbers
 import logging  # Import logging module for logging messages
 import os  # Import os module for interacting with the operating system
+import asyncio
 
 # Setting up logging configuration
 logging.basicConfig(level=logging.INFO)  # Configure logging to display INFO level messages
@@ -192,7 +193,101 @@ async def log_ticket(ctx):  # Command function to log a ticket conversation
     else:
         await ctx.send("This command can only be used in a ticket channel.")  # Send a message if command is not used in a ticket channel
 
-# Command functions for rolling dice are defined similarly and omitted for brevity
+# Load messages for timer
+timer_messages = load_random_messages(os.path.join(base_path, message_folder, 'timer_messages.txt'))
+
+# Timer Command
+@client.command()
+async def timer(ctx, time_duration):
+    try:
+        # Splitting time_duration into hours and minutes
+        hours, minutes = map(int, time_duration.split(':'))
+        # Converting hours and minutes into seconds
+        time_in_seconds = (hours * 3600) + (minutes * 60)
+
+        # Create an embed for the confirmation message
+        embed = discord.Embed(title="Timer Set", color=discord.Color.green())
+        embed.add_field(name="Duration", value=f"{hours} hours and {minutes} minutes", inline=False)
+        confirmation_message = await ctx.send(embed=embed)
+
+        # Waiting for the specified time
+        await asyncio.sleep(time_in_seconds)
+
+        # Sending notification after timer completes
+        if timer_messages:
+            timer_message = random.choice(timer_messages)
+            # Mention the user who activated the command
+            user_mention = ctx.author.mention
+            timer_message = timer_message.replace("{user_mention}", user_mention)
+            await send_embed(ctx, "Timer Notification", timer_message, color=discord.Color.red())
+
+        # Delete the confirmation message after the timer notification is sent
+        await confirmation_message.delete()
+    except ValueError:
+        await ctx.send("Invalid time duration format. Please provide the time in the format 'HH:MM'.")
+
+# Read timer messages from a text file
+timer_messages_filepath = os.path.join(base_path, message_folder, 'timer_messages.txt')
+with open(timer_messages_filepath, 'r') as file:
+    timer_messages = [line.strip() for line in file]
+
+# Command functions for rolling dice
+@client.command()
+async def d4(ctx):
+    if D4_messages:
+        response = random.choice(D4_messages)
+        await send_embed(ctx, "D4 Roll", f"🎲 {response}")
+    else:
+        await send_embed(ctx, "D4 Roll", "No messages available for rolling a D4.")
+
+@client.command()
+async def roll(ctx):
+    if D6_messages:
+        response = random.choice(D6_messages)
+        await send_embed(ctx, "D6 Roll", f"🎲 {response}")
+    else:
+        await send_embed(ctx, "D6 Roll", "No messages available for rolling a D6.")
+
+@client.command()
+async def d8(ctx):
+    if D8_messages:
+        response = random.choice(D8_messages)
+        await send_embed(ctx, "D8 Roll", f"🎲 {response}")
+    else:
+        await send_embed(ctx, "D8 Roll", "No messages available for rolling a D8.")
+
+@client.command()
+async def d10(ctx):
+    if D10_messages:
+        response = random.choice(D10_messages)
+        await send_embed(ctx, "D10 Roll", f"🎲 {response}")
+    else:
+        await send_embed(ctx, "D10 Roll", "No messages available for rolling a D10.")
+
+@client.command()
+async def d12(ctx):
+    if D12_messages:
+        response = random.choice(D12_messages)
+        await send_embed(ctx, "D12 Roll", f"🎲 {response}")
+    else:
+        await send_embed(ctx, "D12 Roll", "No messages available for rolling a D12.")
+
+@client.command()
+async def d20(ctx):
+    if D20_messages:
+        response = random.choice(D20_messages)
+        await send_embed(ctx, "D20 Roll", f"🎲 {response}")
+    else:
+        await send_embed(ctx, "D20 Roll", "No messages available for rolling a D20.")
+
+# Coin Flip Command
+@client.command()
+async def coinflip(ctx):
+    if coinflip_messages:
+        response = random.choice(coinflip_messages)
+        await send_embed(ctx, "Coin Flip", f":coin: {response}")
+    else:
+        await send_embed(ctx, "Coin Flip", "No messages available for coin flipping.")
 
 # Run the Discord bot with your token
 client.run('YOUR_DISCORD_BOT_TOKEN')  # Run the bot with your token. Make sure to replace YOUR_DISCORD_BOT_TOKEN with your token.
