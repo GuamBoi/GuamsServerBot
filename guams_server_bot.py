@@ -37,22 +37,11 @@ def load_random_messages(filepath):
         return []
 
 # Bot Path Info
-base_path = '/home/guam/GuamsServerBot/'
+base_path = '/home/kali/GuamsServerBot/'
 message_folder = 'Bot Messages/'
 ticket_messages = load_random_messages(os.path.join(base_path, message_folder, 'ticket_messages.txt'))
 timer_messages = load_random_messages(os.path.join(base_path, message_folder, 'timer_messages.txt'))
-ticket_logs_folder = '/home/guam/GuamsServerBot/Ticket Logs/'
-
-# Dice Message Paths
-D4_messages = load_random_messages(os.path.join(base_path, message_folder, 'D4_messages.txt'))
-D6_messages = load_random_messages(os.path.join(base_path, message_folder, 'D6_messages.txt'))
-D8_messages = load_random_messages(os.path.join(base_path, message_folder, 'D8_messages.txt'))
-D10_messages = load_random_messages(os.path.join(base_path, message_folder, 'D10_messages.txt'))
-D12_messages = load_random_messages(os.path.join(base_path, message_folder, 'D12_messages.txt'))
-D20_messages = load_random_messages(os.path.join(base_path, message_folder, 'D20_messages.txt'))
-coinflip_messages = load_random_messages(os.path.join(base_path, message_folder, 'coinflip.txt'))
-welcome_messages = load_random_messages(os.path.join(base_path, message_folder, 'welcome_messages.txt'))
-goodbye_messages = load_random_messages(os.path.join(base_path, message_folder, 'goodbye_messages.txt'))
+ticket_logs_folder = '/home/kali/GuamsServerBot/Ticket Logs/'
 
 # Embed Creator
 async def send_embed(ctx, title, description, color=discord.Color.red(), thumbnail=None, fields=None):
@@ -120,6 +109,16 @@ async def commands(ctx):
     embed.add_field(name=":game_die: !dice_commands", value="Lists all the dice commands", inline=False)
     embed.add_field(name=":coin: !coinflip", value="Flips a coin", inline=False)
     embed.add_field(name=":alarm_clock: !timer <HH:MM>", value="Set a timer. Make sure your time amount matches the code format!", inline=False)
+    embed.add_field(name=":loud_sound: !voice_commands", value="Lists all the Voice Chat Commands", inline=False)
+    await ctx.send(embed=embed)
+    await ctx.message.delete()
+
+# Voice Command List
+@client.command()
+async def voice_commands(ctx):
+    embed = discord.Embed(title="Voice Chat Commands", color=discord.Color.red())
+    embed.add_field(name=":mute: !mute", value="Mutes you and all members in the voice chat with you", inline=False)
+    embed.add_field(name=":sound: !unmute", value="Unmutes you and all members in the voice chat with you", inline=False)
     await ctx.send(embed=embed)
     await ctx.message.delete()
 
@@ -135,6 +134,17 @@ async def dice_commands(ctx):
     embed.add_field(name=":game_die: !d20", value="Rolls a D20 dice", inline=False)
     await ctx.send(embed=embed)
     await ctx.message.delete()
+
+# Dice Message Paths
+D4_messages = load_random_messages(os.path.join(base_path, message_folder, 'D4_messages.txt'))
+D6_messages = load_random_messages(os.path.join(base_path, message_folder, 'D6_messages.txt'))
+D8_messages = load_random_messages(os.path.join(base_path, message_folder, 'D8_messages.txt'))
+D10_messages = load_random_messages(os.path.join(base_path, message_folder, 'D10_messages.txt'))
+D12_messages = load_random_messages(os.path.join(base_path, message_folder, 'D12_messages.txt'))
+D20_messages = load_random_messages(os.path.join(base_path, message_folder, 'D20_messages.txt'))
+coinflip_messages = load_random_messages(os.path.join(base_path, message_folder, 'coinflip.txt'))
+welcome_messages = load_random_messages(os.path.join(base_path, message_folder, 'welcome_messages.txt'))
+goodbye_messages = load_random_messages(os.path.join(base_path, message_folder, 'goodbye_messages.txt'))
 
 # Dice Commands
 @client.command()
@@ -311,6 +321,72 @@ async def timer(ctx, time_duration):
 timer_messages_filepath = os.path.join(base_path, message_folder, 'timer_messages.txt')
 with open(timer_messages_filepath, 'r') as file:
     timer_messages = [line.strip() for line in file]
+
+# Mute Command
+@client.command()
+async def mute(ctx):
+    silenced_role = discord.utils.get(ctx.guild.roles, name="!mute")
+    if silenced_role is None:
+        await ctx.send("The '!mute' role does not exist.")
+        return
+
+    if ctx.author.voice is None:
+        await ctx.send("You need to be in a voice channel to use this command.")
+        return
+
+    voice_channel = ctx.author.voice.channel
+
+    members_to_tag = []
+
+    for member in voice_channel.members:
+        if silenced_role in member.roles:
+            await member.edit(mute=True)
+            members_to_tag.append(member)
+
+    if members_to_tag:
+        # Load messages from mute_messages.txt
+        mute_messages = load_random_messages(os.path.join(base_path, message_folder, 'mute_messages.txt'))
+
+        if mute_messages:
+            message = random.choice(mute_messages)
+            # Replace placeholders with role mention
+            message = message.replace("{role}", silenced_role.mention)
+            embed = discord.Embed(title=":mute: Mute", description=message, color=discord.Color.red())
+            await ctx.send(embed=embed)
+            await ctx.message.delete()
+
+# Unmute command
+@client.command()
+async def unmute(ctx):
+    silenced_role = discord.utils.get(ctx.guild.roles, name="!mute")
+    if silenced_role is None:
+        await ctx.send("The '!mute' role does not exist.")
+        return
+
+    if ctx.author.voice is None:
+        await ctx.send("You need to be in a voice channel to use this command.")
+        return
+
+    voice_channel = ctx.author.voice.channel
+
+    members_to_tag = []
+
+    for member in voice_channel.members:
+        if silenced_role in member.roles:
+            await member.edit(mute=False)
+            members_to_tag.append(member)
+
+    if members_to_tag:  # Checking if there are any members to tag
+        # Load messages from unmute_messages.txt
+        unmute_messages = load_random_messages(os.path.join(base_path, message_folder, 'unmute_messages.txt'))
+
+        if unmute_messages:
+            message = random.choice(unmute_messages)
+            # Replace placeholders with role mention
+            message = message.replace("{role}", silenced_role.mention)
+            embed = discord.Embed(title=":lound_sound: Unmute", description=message, color=discord.Color.green())
+            await ctx.send(embed=embed)
+            await ctx.message.delete()
 
 # Bot Token
 client.run('YOUR_DISCORD_BOT_TOKEN')
