@@ -1,0 +1,1 @@
+This file is required to be here to upload a github folder. You can delete this file if you want. This is the Folder where your Ticket Logs will be stored after a user types '!log_ticket' in a Ticket Channel. 
