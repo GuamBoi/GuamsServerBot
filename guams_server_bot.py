@@ -52,7 +52,7 @@ async def send_embed(ctx, title, description, color=discord.Color.red(), thumbna
 # Event handler for bot's readiness
 @client.event
 async def on_ready():
-    logging.info('Hello World! It is a great day to be Alive!.')
+    logging.info('Hello World! It is a great day to be Alive!')
     command_info = "Type '!commands' to see available commands."
     await client.change_presence(activity=discord.Game(name=command_info))
 
