@@ -1,0 +1,6 @@
+The hammer of silence falls upon {role}! Shhh... Silence reigns!
+{role} has been muted. Let the silence speak louder than words.
+Silent mode activated for {role}. Enjoy the peace!
+The sound of silence echoes as {role} is muted.
+Muted: {role}. Sometimes, silence is the loudest answer.
+Speechless: {role}. Let actions speak louder than words.
