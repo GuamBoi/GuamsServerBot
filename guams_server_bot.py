@@ -52,7 +52,7 @@ async def send_embed(ctx, title, description, color=discord.Color.red(), thumbna
 # Event handler for bot's readiness
 @client.event
 async def on_ready():
-    logging.info('Bot is ready.')
+    logging.info('Hello World! It is a great day to be Alive!.')
     command_info = "Type '!commands' to see available commands."
     await client.change_presence(activity=discord.Game(name=command_info))
 
@@ -82,7 +82,8 @@ async def commands(ctx):
     embed = discord.Embed(title="Server Commands", color=discord.Color.red())
     embed.add_field(name=":game_die: !dice_commands", value="Lists all the dice commands", inline=False)
     embed.add_field(name=":coin: !coinflip", value="Flips a coin", inline=False)
-    embed.add_field(name=":ballot_box: !suggest", value="Creates a suggestion", inline=False)  # Updated command name here
+    embed.add_field(name=":ballot_box: !suggest", value="Creates a Server Suggestion", inline=False)
+    embed.add_field(name=":bar_chart: !poll", value="Creates a Server Poll", inline=False)
     await ctx.send(embed=embed)
 
 # Command to display available dice rolling commands
@@ -103,7 +104,17 @@ async def suggest(ctx, *, question):
     embed = discord.Embed(title="Server Suggestion", description=question, color=discord.Color.red())
     embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
     embed.add_field(name="Everyone can vote!", value="👍 Yes    👎 No", inline=False)
-    message = await send_embed(ctx, "Suggestion", question, thumbnail="https://example.com/poll_thumbnail.png", fields=[("Everyone can Vote!", "👍 Yes    👎 No", False)])
+    message = await send_embed(ctx, "Server Suggestion", question, thumbnail="https://images.emojiterra.com/twitter/v13.1/512px/1f5f3.png", fields=[("Everyone can Vote!", "👍 Yes    👎 No", False)])
+    await message.add_reaction('👍')
+    await message.add_reaction('👎')
+
+# Command to create a New Server Poll
+@client.command()
+async def poll(ctx, *, question):
+    embed = discord.Embed(title="Server Suggestion", description=question, color=discord.Color.red())
+    embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
+    embed.add_field(name="Everyone can vote!", value="👍 Yes    👎 No", inline=False)
+    message = await send_embed(ctx, "Server Poll", question, thumbnail="https://images.emojiterra.com/google/noto-emoji/unicode-15.1/color/1024px/1f4ca.png", fields=[("Everyone can Vote!", "👍 Yes    👎 No", False)])
     await message.add_reaction('👍')
     await message.add_reaction('👎')
 
@@ -114,7 +125,7 @@ async def d4(ctx):
         response = random.choice(D4_messages)
         await send_embed(ctx, "D4 Roll", f"🎲 {response}")
     else:
-        await send_embed(ctx, "D4 Roll", "No messages available for rolling a D4.")
+        await send_embed(ctx, "D4 Roll", "Oh No! I can find my D4! Come back and try again later once after I find it!")
 
 # Command to roll a normal D6 dice
 @client.command()
@@ -123,7 +134,7 @@ async def roll(ctx):
         response = random.choice(D6_messages)
         await send_embed(ctx, "D6 Roll", f"🎲 {response}")
     else:
-        await send_embed(ctx, "D6 Roll", "No messages available for rolling a D6.")
+        await send_embed(ctx, "D6 Roll", "Oh No! I can find my D6! Come back and try again later once after I find it!")
 
 # Command to roll a D8 dice
 @client.command()
@@ -132,7 +143,7 @@ async def d8(ctx):
         response = random.choice(D8_messages)
         await send_embed(ctx, "D8 Roll", f"🎲 {response}")
     else:
-        await send_embed(ctx, "D8 Roll", "No messages available for rolling a D8.")
+        await send_embed(ctx, "D8 Roll", "Oh No! I can find my D8! Come back and try again later once after I find it!")
 
 # Command to roll a D10 dice
 @client.command()
@@ -141,7 +152,7 @@ async def d10(ctx):
         response = random.choice(D10_messages)
         await send_embed(ctx, "D10 Roll", f"🎲 {response}")
     else:
-        await send_embed(ctx, "D10 Roll", "No messages available for rolling a D10.")
+        await send_embed(ctx, "D10 Roll", "Oh No! I can find my D10! Come back and try again later once after I find it!")
 
 # Command to roll a D12 dice
 @client.command()
@@ -150,7 +161,7 @@ async def d12(ctx):
         response = random.choice(D12_messages)
         await send_embed(ctx, "D12 Roll", f"🎲 {response}")
     else:
-        await send_embed(ctx, "D12 Roll", "No messages available for rolling a D12.")
+        await send_embed(ctx, "D12 Roll", "Oh No! I can find my D12! Come back and try again later once after I find it!")
 
 # Command to roll a D20 dice
 @client.command()
@@ -159,7 +170,7 @@ async def d20(ctx):
         response = random.choice(D20_messages)
         await send_embed(ctx, "D20 Roll", f"🎲 {response}")
     else:
-        await send_embed(ctx, "D20 Roll", "No messages available for rolling a D20.")
+        await send_embed(ctx, "D20 Roll", "Oh No! I can find my D20! Come back and try again later once after I find it!")
 
 # Command to flip a coin
 @client.command()
@@ -168,7 +179,7 @@ async def coinflip(ctx):
         response = random.choice(coinflip_messages)
         await send_embed(ctx, "Coin Flip", f":coin: {response}")
     else:
-        await send_embed(ctx, "Coin Flip", "No messages available for coin flipping.")
+        await send_embed(ctx, "Coin Flip", "Oh No! I can find my Lucky Coin! Come back and try again later once after I find it!")
 
 # Run the Discord bot with your token
 client.run('YOUR_DISCORD_BOT_TOKEN')  # Run the bot with your token. Make sure to replace YOUR_DISCORD_BOT_TOKEN with your token.
