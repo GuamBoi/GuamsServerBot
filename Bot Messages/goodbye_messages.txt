@@ -1,0 +1,2 @@
+Goodbye {member_mention}, we'll miss you!
+Sad to see you leave, {member_mention}. Take care!
