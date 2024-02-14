@@ -9,7 +9,7 @@ Decide on the emoji you want to use and the role you want to assign users when t
 
 Once you have the emoji and role information, you need to update your bot's code to handle the new reactions. This will involves modifying the `on_raw_reaction_add` and `on_raw_reaction_remove` event listeners.
 
-#### Step 3.1: Update `on_raw_reaction_add` Event Listener
+### Step 3.1: Update `on_raw_reaction_add` Event Listener
 
 In the `on_raw_reaction_add` event listener, add a new `elif` block to check if the reaction emoji matches the one you want to assign a role for. If it does, fetch the corresponding role and assign it to the reacting member.
 
@@ -47,7 +47,7 @@ async def on_raw_reaction_add(payload):
                 await member.add_roles(role)
 ```
 
-#### Step 3.2: Update `on_raw_reaction_remove` Event Listener (Optional but Recomended)
+### Step 3.2: Update `on_raw_reaction_remove` Event Listener (Optional but Recomended)
 If you want the bot to remove the role when the user removes their reaction, update the `on_raw_reaction_remove` event listener similarly.
 ```
 @client.event
