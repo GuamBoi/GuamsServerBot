@@ -58,5 +58,4 @@ To set up Guam's Server Bot for your Discord server, follow these steps:
 - `!d20`: Rolls a D20 dice.
   
 ## Thank You! <a name="thanks"></a>
-**Thank You!!
 Thank you for choosing Guam's Server Bot! If you have any questions or need further assistance consider joining my [Discord](https://discord.gg/sKhasKfd)
