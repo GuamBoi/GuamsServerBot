@@ -49,6 +49,7 @@ async def on_raw_reaction_add(payload):
 
 ### Step 3.2: Update `on_raw_reaction_remove` Event Listener (Optional but Recomended)
 If you want the bot to remove the role when the user removes their reaction, update the `on_raw_reaction_remove` event listener similarly.
+
 ```
 @client.event
 async def on_raw_reaction_remove(payload):
@@ -83,9 +84,33 @@ async def on_raw_reaction_remove(payload):
                 await member.remove_roles(role)
 
 ```
-### Step 4: Test Your Bot
 
-After making these changes, restart your bot and test it out on your Discord server by reacting to the designated message with the specified emoji. Ensure that the bot assigns the role as expected.
+### Step 4: Sending Messages as your discord bot
+You will want to create a command that allows you to send messages as your discord bot to attach your reaction rolls too. This is because the code will only add the roll to the emoji if it was sent by the bot. Its set this way so users can still use your server emojis without messing up the rolls they selected. Below is the code to send an embeded message to the server as the bot.
+
+```
+# Send a message as the Bot
+@client.command()
+async def send_bot_message(ctx, *, args): # the command to send messages as the bot is set to !send_bot_message. You can change this if you'd like.
+    # Split the arguments into title and message
+    split_args = args.split(':')
+
+    if len(split_args) < 2:
+        await ctx.send("Please provide both title and message separated by a colon (':').")
+        return
+
+    title = split_args[0].strip()
+    message = ':'.join(split_args[1:]).strip()
+
+    # Create an embed with the provided title and message
+    embed = discord.Embed(title=title, description=message, color=discord.Color.red())
+    
+    # Send the embed to the same channel where the command was invoked
+    await ctx.send(embed=embed)
+    
+    # Delete the original command message
+    await ctx.message.delete()
+```
 
 ### Additional Notes:
 - Make sure that the bot has the necessary permissions to assign and remove roles in your Discord server.
