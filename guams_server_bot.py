@@ -116,6 +116,118 @@ async def on_member_remove(member):
         embed = discord.Embed(title="Goodbye!", description=goodbye_message, color=discord.Color.red())
         await goodbye_channel.send(embed=embed)
 
+# Event listener to handle reaction events
+@client.event
+async def on_raw_reaction_add(payload):
+    # Check if the reaction event is from a guild (server)
+    if payload.guild_id is None:
+        return
+
+    # Get the channel object based on the channel ID from the payload
+    channel = client.get_channel(payload.channel_id)
+    if not channel:
+        return
+
+    # Get the message object based on the message ID from the payload
+    message = await channel.fetch_message(payload.message_id)
+    if not message:
+        return
+
+    # Get the member object from the payload
+    guild = client.get_guild(payload.guild_id)
+    member = guild.get_member(payload.user_id)
+    if not member:
+        return
+
+# - - - - - - - - - - - - - - !!!EDIT FROM HERE DOWN TO ADD REACTION ROLLS!!! - - - - - - - - - - - - - -
+
+
+    # Check if the message is the one you sent and handle reactions accordingly 
+    if message.author == client.user:
+        # Check the reaction emoji and assign roles based on the emoji
+        if payload.emoji.name == 'your_emoji_name':  # Replace 'your_emoji_name' with the actual emoji name
+            role = discord.utils.get(guild.roles, name='Your Role Name')  # Replace 'Your Role Name' with the actual role name
+            if role:
+                await member.add_roles(role)
+
+# - - - - - - - - - - - - - - !!!STOP EDITING FOR REACTION ROLLS!!! - - - - - - - - - - - - - -
+
+# Event listener to handle reaction removal events
+@client.event
+async def on_raw_reaction_remove(payload):
+    # Check if the reaction event is from a guild (server)
+    if payload.guild_id is None:
+        return
+
+    # Get the channel object based on the channel ID from the payload
+    channel = client.get_channel(payload.channel_id)
+    if not channel:
+        return
+
+    # Get the message object based on the message ID from the payload
+    message = await channel.fetch_message(payload.message_id)
+    if not message:
+        return
+
+    # Get the member object from the payload
+    guild = client.get_guild(payload.guild_id)
+    member = guild.get_member(payload.user_id)
+    if not member:
+        return
+
+# - - - - - - - - - - - - - - !!!EDIT FROM HERE DOWN TO ADD REACTION ROLLS!!! - - - - - - - - - - - - - -
+
+    # Check if the message is the one you sent and handle reactions accordingly
+    if message.author == client.user:
+        # Check the reaction emoji and remove roles based on the emoji
+        if payload.emoji.name == 'your_emoji_name':  # Replace 'your_emoji_name' with the actual emoji name
+            role = discord.utils.get(guild.roles, name='Your Role Name')  # Replace 'Your Role Name' with the actual role name
+            if role:
+                await member.remove_roles(role)
+
+# - - - - - - - - - - - - - - !!!STOP EDITING FOR REACTION ROLLS!!! - - - - - - - - - - - - - -
+
+
+# Send a message as the Bot
+@client.command()
+async def send_bot_message(ctx, *, args):
+    # Split the arguments into title and message
+    split_args = args.split(':')
+
+    if len(split_args) < 2:
+        await ctx.send("Please provide both title and message separated by a colon (':').")
+        return
+
+    title = split_args[0].strip()
+    message = ':'.join(split_args[1:]).strip()
+
+    # Create an embed with the provided title and message
+    embed = discord.Embed(title=title, description=message, color=discord.Color.red())
+    
+    # Send the embed to the same channel where the command was invoked
+    await ctx.send(embed=embed)
+    
+    # Delete the original command message
+    await ctx.message.delete()
+
+# Add Reaction Emojis to Messages
+@client.command()
+async def add_reactions(ctx, message_id: int, *emojis):
+    # Fetch the message object based on the provided message ID
+    try:
+        message = await ctx.channel.fetch_message(message_id)
+    except discord.NotFound:
+        await ctx.send("Message not found.")
+        return
+
+    # Add reactions to the message
+    for emoji in emojis:
+        try:
+            await message.add_reaction(emoji)
+        except discord.HTTPException:
+            await ctx.send(f"Failed to add reaction for emoji: {emoji}")
+    await ctx.message.delete()
+
 #Command List
 @client.command()
 async def commands(ctx):
