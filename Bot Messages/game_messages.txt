@@ -1,0 +1,1 @@
+{user_mention} is playing {game_name} in the {voice_channel_mention} chat! Come join them {role_mention} players!
