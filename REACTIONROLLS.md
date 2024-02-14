@@ -38,7 +38,9 @@ async def on_raw_reaction_add(payload):
 
 # - - - - - - - - - - - - - - !!!EDIT FROM HERE DOWN TO ADD REACTION ROLLS!!! - - - - - - - - - - - - - -
 
-    # Check if the message is the one you sent and handle reactions accordingly # PLEASE SEE THE `SEND_BOT_MESSAGES.md` FOR MOR INFORMATION ON THIS!!!!!!!!!!!!!
+# PLEASE SEE THE `SEND_BOT_MESSAGES.md` FOR MOR INFORMATION ON THIS!!!!!!!!!!!!!
+
+    # Check if the message is the one you sent and handle reactions accordingly 
     if message.author == client.user:
         # Check the reaction emoji and assign roles based on the emoji
         if payload.emoji.name == 'your_emoji_name':  # Replace 'your_emoji_name' with the actual emoji name
@@ -72,9 +74,11 @@ async def on_raw_reaction_remove(payload):
     if not member:
         return
 
-# - - - - - - - - - - - - - - !!!EDIT FROM HERE DOWN TO ADD REACTION ROLLS!!! - - - - - - - - - - - - - -  
+# - - - - - - - - - - - - - - !!!EDIT FROM HERE DOWN TO ADD REACTION ROLLS!!! - - - - - - - - - - - - - -
 
-    # Check if the message is the one you sent and handle reactions accordingly # PLEASE SEE THE `SEND_BOT_MESSAGES.md` FOR MOR INFORMATION ON THIS!!!!!!!!!!!!!
+# PLEASE SEE THE `SEND_BOT_MESSAGES.md` FOR MOR INFORMATION ON THIS!!!!!!!!!!!!!
+
+    # Check if the message is the one you sent and handle reactions accordingly
     if message.author == client.user:
         # Check the reaction emoji and remove roles based on the emoji
         if payload.emoji.name == 'your_emoji_name':  # Replace 'your_emoji_name' with the actual emoji name
