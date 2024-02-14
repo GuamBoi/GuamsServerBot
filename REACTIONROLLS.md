@@ -38,8 +38,6 @@ async def on_raw_reaction_add(payload):
 
 # - - - - - - - - - - - - - - !!!EDIT FROM HERE DOWN TO ADD REACTION ROLLS!!! - - - - - - - - - - - - - -
 
-# PLEASE SEE THE `SEND_BOT_MESSAGES.md` FOR MOR INFORMATION ON THIS!!!!!!!!!!!!!
-
     # Check if the message is the one you sent and handle reactions accordingly 
     if message.author == client.user:
         # Check the reaction emoji and assign roles based on the emoji
@@ -75,8 +73,6 @@ async def on_raw_reaction_remove(payload):
         return
 
 # - - - - - - - - - - - - - - !!!EDIT FROM HERE DOWN TO ADD REACTION ROLLS!!! - - - - - - - - - - - - - -
-
-# PLEASE SEE THE `SEND_BOT_MESSAGES.md` FOR MOR INFORMATION ON THIS!!!!!!!!!!!!!
 
     # Check if the message is the one you sent and handle reactions accordingly
     if message.author == client.user:
