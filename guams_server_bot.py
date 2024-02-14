@@ -36,24 +36,43 @@ def load_random_messages(filepath):
         logging.error(f"File '{filepath}' not found.")
         return []
 
+# Channel IDs
+welcome_channel_id = 1036760459161911366
+goodbye_channel_id = 1206374744719626361
+suggestion_channel_id = 1197426979192971315
+poll_channel_id = 1207205817640816670
+ticket_category_id = 1036929287346999326 # Make sure to get the ID of a catagory, not a channel
+invite_channel_id = 1036762745527357450
+
 # Bot Path Info
-base_path = '/home/kali/GuamsServerBot/'
+base_path = '/home/guam/GuamsServerBot/'
 message_folder = 'Bot Messages/'
 ticket_messages = load_random_messages(os.path.join(base_path, message_folder, 'ticket_messages.txt'))
 timer_messages = load_random_messages(os.path.join(base_path, message_folder, 'timer_messages.txt'))
-ticket_logs_folder = '/home/kali/GuamsServerBot/Ticket Logs/'
+ticket_logs_folder = '/home/guam/GuamsServerBot/Ticket Logs/'
 
 # Embed Creator
-async def send_embed(ctx, title, description, color=discord.Color.red(), thumbnail=None, fields=None):
+async def send_embed(ctx_or_channel, title, description, color=discord.Color.red(), thumbnail=None, fields=None):
+    if isinstance(ctx_or_channel, discord.TextChannel):
+        # If ctx_or_channel is a TextChannel, set author to None
+        author = None
+    else:
+        author = ctx_or_channel.author if hasattr(ctx_or_channel, 'author') else None
+    
     embed = discord.Embed(title=title, description=description, color=color)
-    if ctx.author.avatar:
-        embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
+    if author:
+        embed.set_author(name=author.name, icon_url=author.avatar.url)
     if thumbnail:
         embed.set_thumbnail(url=thumbnail)
     if fields:
         for name, value, inline in fields:
             embed.add_field(name=name, value=value, inline=inline)
-    return await ctx.send(embed=embed)
+    if isinstance(ctx_or_channel, discord.TextChannel):
+        # If ctx_or_channel is a TextChannel, send the embed directly
+        return await ctx_or_channel.send(embed=embed)
+    else:
+        # Otherwise, send the embed to the author's channel
+        return await ctx_or_channel.send(embed=embed)
 
 # Read voice channel IDs from the file
 with open('silenced_servers.txt', 'r') as f:
@@ -82,7 +101,6 @@ async def on_voice_state_update(member, before, after):
 # Welcome Messages
 @client.event
 async def on_member_join(member):
-    welcome_channel_id = 1036760459161911366
     welcome_message = random.choice(welcome_messages).format(member_mention=member.mention)
     welcome_channel = client.get_channel(welcome_channel_id)
     if welcome_channel:
@@ -92,7 +110,6 @@ async def on_member_join(member):
 # Goodbye Messages
 @client.event
 async def on_member_remove(member):
-    goodbye_channel_id = 1206374744719626361
     goodbye_message = random.choice(goodbye_messages).format(member_mention=member.mention)
     goodbye_channel = client.get_channel(goodbye_channel_id)
     if goodbye_channel:
@@ -107,6 +124,7 @@ async def commands(ctx):
     embed.add_field(name=":bar_chart: !poll <poll question>", value="Creates a Server Poll", inline=False)
     embed.add_field(name=":tickets: !ticket", value="Creates a New Private Ticket with the Server Mods", inline=False)
     embed.add_field(name=":game_die: !dice_commands", value="Lists all the dice commands", inline=False)
+    embed.add_field(name=":incoming_envelope: !invite", value="Sends an invite to the General chat for the game you're playing", inline=False)
     embed.add_field(name=":coin: !coinflip", value="Flips a coin", inline=False)
     embed.add_field(name=":alarm_clock: !timer <HH:MM>", value="Set a timer. Make sure your time amount matches the code format!", inline=False)
     embed.add_field(name=":loud_sound: !voice_commands", value="Lists all the Voice Chat Commands", inline=False)
@@ -156,6 +174,7 @@ async def d4(ctx):
         await send_embed(ctx, "D4 Roll", "No messages available for rolling a D4.")
     await ctx.message.delete()
 
+# Roll Command
 @client.command()
 async def roll(ctx):
     if D6_messages:
@@ -165,6 +184,7 @@ async def roll(ctx):
         await send_embed(ctx, "D6 Roll", "No messages available for rolling a D6.")
     await ctx.message.delete()
 
+# D8 Command
 @client.command()
 async def d8(ctx):
     if D8_messages:
@@ -174,6 +194,7 @@ async def d8(ctx):
         await send_embed(ctx, "D8 Roll", "No messages available for rolling a D8.")
     await ctx.message.delete()
 
+# D10 Command
 @client.command()
 async def d10(ctx):
     if D10_messages:
@@ -183,6 +204,7 @@ async def d10(ctx):
         await send_embed(ctx, "D10 Roll", "No messages available for rolling a D10.")
     await ctx.message.delete()
 
+# D12 Command
 @client.command()
 async def d12(ctx):
     if D12_messages:
@@ -192,6 +214,7 @@ async def d12(ctx):
         await send_embed(ctx, "D12 Roll", "No messages available for rolling a D12.")
     await ctx.message.delete()
 
+# D20 Command
 @client.command()
 async def d20(ctx):
     if D20_messages:
@@ -214,48 +237,65 @@ async def coinflip(ctx):
 # Create Suggestions Command
 @client.command()
 async def suggest(ctx, *, question):
-    embed = discord.Embed(title="Server Suggestion", description=question, color=discord.Color.red())
-    embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
-    embed.add_field(name="Everyone can vote!", value="👍 Yes    👎 No", inline=False)
-    message = await send_embed(ctx, "Server Suggestion", question, thumbnail="https://images.emojiterra.com/twitter/v13.1/512px/1f5f3.png", fields=[("Everyone can Vote!", "👍 Yes    👎 No", False)])
-    await message.add_reaction('👍')
-    await message.add_reaction('👎')
-    await ctx.message.delete()
+    suggestion_channel = client.get_channel(suggestion_channel_id)
+    
+    if suggestion_channel:
+        embed = discord.Embed(title="Server Suggestion", description=question, color=discord.Color.red())
+        embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
+        embed.add_field(name="Everyone can vote!", value="👍 Yes    👎 No", inline=False)
+        message = await suggestion_channel.send(embed=embed)
+        await message.add_reaction('👍')
+        await message.add_reaction('👎')
+        await ctx.message.delete()
+    else:
+        await ctx.send("Suggestion channel not found.")
 
 # Create Polls Command
 @client.command()
 async def poll(ctx, *, question):
-    embed = discord.Embed(title="Server Suggestion", description=question, color=discord.Color.red())
-    embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
-    embed.add_field(name="Everyone can vote!", value="👍 Yes    👎 No", inline=False)
-    message = await send_embed(ctx, "Server Poll", question, thumbnail="https://images.emojiterra.com/google/noto-emoji/unicode-15.1/color/1024px/1f4ca.png", fields=[("Everyone can Vote!", "👍 Yes    👎 No", False)])
-    await message.add_reaction('👍')
-    await message.add_reaction('👎')
-    await ctx.message.delete()
+    poll_channel = client.get_channel(poll_channel_id)
+    
+    if poll_channel:
+        embed = discord.Embed(title="Server Poll", description=question, color=discord.Color.red())
+        embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
+        embed.add_field(name="Everyone can vote!", value="👍 Yes    👎 No", inline=False)
+        message = await poll_channel.send(embed=embed)
+        await message.add_reaction('👍')
+        await message.add_reaction('👎')
+        await ctx.message.delete()
+    else:
+        await ctx.send("Poll channel not found.")
 
 # Create Tickets Command
 @client.command()
 async def ticket(ctx):
-    category = discord.utils.get(ctx.guild.categories, name="Tickets")
-    if not category:
-        category = await ctx.guild.create_category("Tickets")
+    # Get the ticket category or return if it doesn't exist
+    category = ctx.guild.get_channel(ticket_category_id)
+    if not category or not isinstance(category, discord.CategoryChannel):
+        await ctx.send("Ticket category not found.")
+        return
 
+    # Check if the user already has an open ticket
     for channel in category.channels:
         if channel.name.startswith("Ticket-") and channel.topic == str(ctx.author.id):
             await ctx.author.send("You already have an open ticket.")
             return
 
-    ticket_channel_name = f"Ticket-{ctx.author.name.replace(' ', '-')}"
-
+    # Define permissions for the ticket channel
     overwrites = {
         ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
         ctx.author: discord.PermissionOverwrite(read_messages=True, send_messages=True),
         ctx.guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True)
     }
 
+    # Define the name for the ticket channel
+    ticket_channel_name = f"Ticket-{ctx.author.name.replace(' ', '-')}"
+
+    # Create the ticket channel under the specified category with the defined permissions
     ticket_channel = await category.create_text_channel(ticket_channel_name, overwrites=overwrites)
     ticket_channel.topic = str(ctx.author.id)
 
+    # Send a message to the ticket channel if there are ticket messages available
     if ticket_messages:
         ticket_message = random.choice(ticket_messages)
         await ticket_channel.send(ticket_message.format(user_mention=ctx.author.mention))
@@ -386,7 +426,43 @@ async def unmute(ctx):
             message = message.replace("{role}", silenced_role.mention)
             embed = discord.Embed(title=":lound_sound: Unmute", description=message, color=discord.Color.green())
             await ctx.send(embed=embed)
-            await ctx.message.delete()
+    await ctx.message.delete()
+
+# Game Invite Command
+@client.command()
+async def invite(ctx):
+    if ctx.author.voice is not None:  # Check if the author is in a voice channel
+        voice_channel = ctx.author.voice.channel  # Get the voice channel the user is in
+        game = ctx.author.activity.name if ctx.author.activity else None
+        if game:
+            role = discord.utils.get(ctx.guild.roles, name=game)
+            if role:
+                # Fetch the invite channel using the ID
+                invite_channel = ctx.guild.get_channel(invite_channel_id)
+                
+                if invite_channel:
+                    # Load a random message from 'game_messages.txt'
+                    message_filepath = os.path.join(base_path, message_folder, 'game_messages.txt')
+                    random_message = random.choice(load_random_messages(message_filepath))  # Choose a random message from the file
+
+                    # Format the message with actual values
+                    formatted_message = random_message.format(
+                        user_mention=ctx.author.mention,  # Mention the user who initiated the invite
+                        game_name=game,  # The name of the game the user is playing
+                        voice_channel_mention=voice_channel.mention,  # Mention the voice channel
+                        role_mention=role.mention  # Mention the role associated with the game
+                    )
+
+                    await send_embed(invite_channel, "Game Invitation", formatted_message, color=discord.Color.green())
+                else:
+                    await ctx.send("Invite channel not found.")
+            else:
+                await ctx.send(f"No role found for {game}.")
+        else:
+            await ctx.send("You need to be playing a game to use this command.")
+    else:
+        await ctx.send("You need to be in a voice channel to use this command.")
+    await ctx.message.delete()
 
 # Bot Token
 client.run('YOUR_DISCORD_BOT_TOKEN')
