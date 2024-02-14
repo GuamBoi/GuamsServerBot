@@ -7,6 +7,7 @@ Welcome to Guam's Server Bot! This bot is designed to enhance your Discord serve
 2. [Features](#features)
 3. [Setup](#setup)
 4. [Commands](#commands)
+5. [Thank You!](#thanks)
 
 ## Introduction <a name="introduction"></a>
 Guam's Server Bot is a Discord bot built using the Discord.py library. This bot will require you to change a few things within the code to get it working within your server! Feel free to download it and make whatever changes you would like! I post frequent updates for it too so make sure to come back and check here as Updates are created to see if they are something you want to add to your server! Hope you enjoy it!
@@ -56,5 +57,6 @@ To set up Guam's Server Bot for your Discord server, follow these steps:
 - `!d12`: Rolls a D12 dice.
 - `!d20`: Rolls a D20 dice.
   
-## Thank You!
+## Thanks <a name="thanks"></a>
+**Thank You!!
 Thank you for choosing Guam's Server Bot! If you have any questions or need further assistance consider joining my [Discord](https://discord.gg/sKhasKfd)
