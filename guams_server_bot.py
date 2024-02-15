@@ -1,6 +1,8 @@
 #Import List
 import discord
 from discord.ext import commands
+from discord.ext.commands import Command
+from discord.ext.commands import Cog
 import random
 import logging
 import os
@@ -15,6 +17,8 @@ client = commands.Bot(command_prefix='!', intents=intents)
 
 # Define Rolles
 silenced_role_name = '!mute'  # Name of the role to assign
+moderator_role_name = 'Moderator'  # Name of the role for moderators
+friend_role_name = 'Friend'  # Name of the role for friends
 
 #Bot Boot Info / Playing Title
 @client.event
@@ -23,6 +27,9 @@ async def on_ready():
     command_info = "Type '!commands' to see available commands."
     await client.change_presence(activity=discord.Game(name=command_info))
 
+    await client.add_cog(FriendCommands(client))
+    await client.add_cog(Moderation(client))
+    
 # Logging Configuration ???
 logging.basicConfig(level=logging.INFO)
 
@@ -76,7 +83,7 @@ async def send_embed(ctx_or_channel, title, description, color=discord.Color.red
         # Otherwise, send the embed to the author's channel
         return await ctx_or_channel.send(embed=embed)
 
-# Embed Creator
+# Complex Embed Creator
 async def send_complex_embed(ctx_or_channel, title, description, color=discord.Color.red(), thumbnail=None, fields=None):
     if isinstance(ctx_or_channel, discord.TextChannel):
         # If ctx_or_channel is a TextChannel, set author to None
@@ -127,7 +134,7 @@ async def on_member_join(member):
     welcome_message = random.choice(welcome_messages).format(member_mention=member.mention)
     welcome_channel = client.get_channel(welcome_channel_id)
     if welcome_channel:
-        embed = discord.Embed(title="Welcome to the Server!", description=welcome_message, color=discord.Color.red())
+        embed = discord.Embed(title=":wave: Welcome to the Server!", description=welcome_message, color=discord.Color.red())
         await welcome_channel.send(embed=embed)
 
 # Goodbye Messages
@@ -136,8 +143,10 @@ async def on_member_remove(member):
     goodbye_message = random.choice(goodbye_messages).format(member_mention=member.mention)
     goodbye_channel = client.get_channel(goodbye_channel_id)
     if goodbye_channel:
-        embed = discord.Embed(title="Goodbye!", description=goodbye_message, color=discord.Color.red())
+        embed = discord.Embed(title=":wave: Goodbye!", description=goodbye_message, color=discord.Color.red())
         await goodbye_channel.send(embed=embed)
+
+### GENERAL COMMANDS ###
 
 #Command List
 @client.command()
@@ -146,11 +155,12 @@ async def commands(ctx):
     embed.add_field(name=":ballot_box: !suggest <your suggestion>", value="Creates a Server Suggestion", inline=False)
     embed.add_field(name=":bar_chart: !poll <poll question>", value="Creates a Server Poll", inline=False)
     embed.add_field(name=":tickets: !ticket", value="Creates a New Private Ticket with the Server Mods", inline=False)
-    embed.add_field(name=":game_die: !dice_commands", value="Lists all the dice commands", inline=False)
-    embed.add_field(name=":incoming_envelope: !invite", value="Sends an invite to the General chat for the game you're playing", inline=False)
-    embed.add_field(name=":coin: !coinflip", value="Flips a coin", inline=False)
+    embed.add_field(name=":envelope: !invite", value="Sends an invite to the General chat for the game you're playing", inline=False)
     embed.add_field(name=":alarm_clock: !timer <HH:MM>", value="Set a timer. Make sure your time amount matches the code format!", inline=False)
+    embed.add_field(name=":coin: !coinflip", value="Flips a coin", inline=False)
+    embed.add_field(name=":game_die: !dice_commands", value="Lists all the dice commands", inline=False)
     embed.add_field(name=":loud_sound: !voice_commands", value="Lists all the Voice Chat Commands", inline=False)
+    embed.add_field(name=":crown: !roll_commands", value="A list of Roll Specific Commands", inline=False)
     await ctx.send(embed=embed)
     await ctx.message.delete()
 
@@ -173,6 +183,15 @@ async def dice_commands(ctx):
     embed.add_field(name=":game_die: !d10", value="Rolls a D10 dice", inline=False)
     embed.add_field(name=":game_die: !d12", value="Rolls a D12 dice", inline=False)
     embed.add_field(name=":game_die: !d20", value="Rolls a D20 dice", inline=False)
+    await ctx.send(embed=embed)
+    await ctx.message.delete()
+
+# Sepcial Roll Commands
+@client.command()
+async def roll_commands(ctx):
+    embed = discord.Embed(title="Roll Specific Commands", color=discord.Color.red())
+    embed.add_field(name=":crown: !friend_commands", value="Lists the Special @Friend Commands", inline=False)
+    embed.add_field(name=":flag_gu: !mod_commands", value="Lists the Special @Moderator Commands", inline=False)
     await ctx.send(embed=embed)
     await ctx.message.delete()
 
@@ -487,41 +506,134 @@ async def invite(ctx):
         await ctx.send("You need to be in a voice channel to use this command.")
     await ctx.message.delete()
     
-# Game Invite Command
-@client.command()
-async def invite_friends(ctx):
-    if ctx.author.voice is not None:  # Check if the author is in a voice channel
-        voice_channel = ctx.author.voice.channel  # Get the voice channel the user is in
-        game = ctx.author.activity.name if ctx.author.activity else None
-        if game:
-            role = discord.utils.get(ctx.guild.roles, name=game)
-            if role:
-                # Fetch the invite channel using the ID
-                invite_channel = ctx.guild.get_channel(invite_friend_channel_id)
-                
-                if invite_channel:
-                    # Load a random message from 'game_messages.txt'
-                    message_filepath = os.path.join(base_path, message_folder, 'game_messages.txt')
-                    random_message = random.choice(load_random_messages(message_filepath))  # Choose a random message from the file
+### FRIEND COMMANDS ###
 
-                    # Format the message with actual values
-                    formatted_message = random_message.format(
-                        user_mention=ctx.author.mention,  # Mention the user who initiated the invite
-                        game_name=game,  # The name of the game the user is playing
-                        voice_channel_mention=voice_channel.mention,  # Mention the voice channel
-                        role_mention=role.mention  # Mention the role associated with the game
-                    )
+# Define a class for Friend commands
 
-                    await send_embed(invite_channel, ":joystick: Game Invitation", formatted_message, color=discord.Color.green())
+from discord.ext import commands
+
+class FriendCommands(commands.Cog):
+    def __init__(self, client):
+        self.client = client
+
+    # Friend Command List
+    @commands.command()
+    @commands.has_role(friend_role_name)
+    async def friend_commands(self, ctx):
+        embed = discord.Embed(title="Special Friend Commands", color=discord.Color.red())
+        embed.add_field(name=":incoming_envelope: !invite_friends", value="Invites users to play the game your playing in the #friend-chat", inline=False)
+        await ctx.send(embed=embed)
+        await ctx.message.delete()
+
+    # Game Invite Command
+    @commands.command()
+    @commands.has_role(friend_role_name)  # Restrict the command to members with the 'Friends' role
+    async def invite_friends(self, ctx):
+        if ctx.author.voice is not None:
+            voice_channel = ctx.author.voice.channel
+            game = ctx.author.activity.name if ctx.author.activity else None
+            if game:
+                role = discord.utils.get(ctx.guild.roles, name=game)
+                if role:
+                    invite_channel = ctx.guild.get_channel(invite_friend_channel_id)
+                    if invite_channel:
+                        message_filepath = os.path.join(base_path, message_folder, 'game_messages.txt')
+                        random_message = random.choice(load_random_messages(message_filepath))
+
+                        formatted_message = random_message.format(
+                            user_mention=ctx.author.mention,
+                            game_name=game,
+                            voice_channel_mention=voice_channel.mention,
+                            role_mention=role.mention
+                        )
+
+                        await send_embed(invite_channel, ":joystick: Game Invitation", formatted_message, color=discord.Color.green())
+                    else:
+                        await ctx.send("Invite channel not found.")
                 else:
-                    await ctx.send("Invite channel not found.")
+                    await ctx.send(f"No role found for {game}.")
             else:
-                await ctx.send(f"No role found for {game}.")
+                await ctx.send("You need to be playing a game to use this command.")
         else:
-            await ctx.send("You need to be playing a game to use this command.")
-    else:
-        await ctx.send("You need to be in a voice channel to use this command.")
-    await ctx.message.delete()
+            await ctx.send("You need to be in a voice channel to use this command.")
+        await ctx.message.delete()
+
+### MODERATOR COMMANDS ###
+
+class Moderation(commands.Cog):
+    def __init__(self, client):
+        self.client = client
+
+    async def check_permissions(self, ctx):
+        moderator_role_name = "Moderator"  # Replace with the actual name of your moderator role
+        moderator_role = discord.utils.get(ctx.guild.roles, name=moderator_role_name)
+        if moderator_role in ctx.author.roles:
+            return True
+        else:
+            embed = discord.Embed(title=":x: Insufficient Permissions", description="You don't have permission to use this command. If you thin this is an error please Message one of the Moderators.", color=discord.Color.red())
+            await ctx.send(embed=embed)
+            return False
+
+    # Mod Command List
+    @commands.command()
+    async def mod_commands(self, ctx):  # Added 'self' parameter
+        if await self.check_permissions(ctx):
+            embed = discord.Embed(title="Special Moderator Commands", color=discord.Color.red())
+            embed.add_field(name=":hourglass: !timeout <username> <time in seconds> <reason>", value="Puts a user in 'timeout' for a set duration of time.", inline=False)
+            embed.add_field(name="!:boot: kick <username> <reason>", value="Kicks a user from the server", inline=False)
+            embed.add_field(name=":no_entry_sign: !ban <username> <reason>", value="Bans a user from the server", inline=False)
+            await ctx.send(embed=embed)
+            await ctx.message.delete()
+
+    # Timeout Command
+    @commands.command()
+    async def timeout(self, ctx, member: discord.Member, duration: int, *, reason="No reason provided."):
+        if await self.check_permissions(ctx):
+            try:
+                await member.edit(mute=True)
+                embed = discord.Embed(title=":hourglass: Member Timeout", description=f"{member.mention} has been timed out for {duration} seconds.", color=discord.Color.red())
+                embed.add_field(name="Reason", value=reason)
+                await ctx.send(embed=embed)
+                await asyncio.sleep(duration)
+                await member.edit(mute=False)
+            except discord.Forbidden:
+                await ctx.send("I don't have the necessary permissions to timeout members.")
+            except Exception as e:
+                await ctx.send(f"An error occurred: {e}")
+            await ctx.message.delete()
+        await ctx.message.delete()
+
+    # Kick Command
+    @commands.command()
+    async def kick(self, ctx, member: discord.Member, *, reason="No reason provided."):
+        if await self.check_permissions(ctx):
+            try:
+                await member.kick(reason=reason)
+                embed = discord.Embed(title=":boot: Member Kicked", description=f"{member.mention} has been kicked.", color=discord.Color.red())
+                embed.add_field(name="Reason", value=reason)
+                await ctx.send(embed=embed)
+            except discord.Forbidden:
+                await ctx.send("I don't have the necessary permissions to kick members.")
+            except Exception as e:
+                await ctx.send(f"An error occurred: {e}")
+            await ctx.message.delete()
+        await ctx.message.delete()
+
+    # Ban Command
+    @commands.command()
+    async def ban(self, ctx, member: discord.Member, *, reason="No reason provided."):
+        if await self.check_permissions(ctx):
+            try:
+                await member.ban(reason=reason)
+                embed = discord.Embed(title=":no_entry_sign: Member Banned", description=f"{member.mention} has been banned.", color=discord.Color.red())
+                embed.add_field(name="Reason", value=reason)
+                await ctx.send(embed=embed)
+            except discord.Forbidden:
+                await ctx.send("I don't have the necessary permissions to ban members.")
+            except Exception as e:
+                await ctx.send(f"An error occurred: {e}")
+            await ctx.message.delete()
+        await ctx.message.delete()
     
 # Bot Token
 client.run('YOUR_DISCORD_BOT_TOKEN')
