@@ -476,7 +476,7 @@ async def invite(ctx):
                         role_mention=role.mention  # Mention the role associated with the game
                     )
 
-                    await send_embed(invite_channel, "Game Invitation", formatted_message, color=discord.Color.green())
+                    await send_embed(invite_channel, ":video_game: Game Invitation", formatted_message, color=discord.Color.green())
                 else:
                     await ctx.send("Invite channel not found.")
             else:
@@ -512,7 +512,7 @@ async def invite_friends(ctx):
                         role_mention=role.mention  # Mention the role associated with the game
                     )
 
-                    await send_embed(invite_channel, "Game Invitation", formatted_message, color=discord.Color.green())
+                    await send_embed(invite_channel, ":joystick: Game Invitation", formatted_message, color=discord.Color.green())
                 else:
                     await ctx.send("Invite channel not found.")
             else:
