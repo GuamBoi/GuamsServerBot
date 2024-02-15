@@ -1,2 +1,12 @@
 Welcome {member_mention} to the server! We're glad to have you here.
 Hey there {member_mention}, welcome to the community!
+Greetings, {member_mention}! A warm welcome to our server. We're thrilled to have you join us!
+Welcome aboard, {member_mention}! This community is now your virtual home. Let's make some unforgettable memories together!
+Hello and welcome, {member_mention}! Your presence enriches our server. Enjoy your stay with us!
+Hey {member_mention}, glad you're here! Joining our community marks the beginning of an exciting journey. Welcome!
+A hearty welcome to you, {member_mention}! Your arrival brings a new spark to our server. Let's make it a vibrant place together!
+Welcome, {member_mention}! Your presence adds to the tapestry of our community. Let's create something special together!
+Hi there, {member_mention}! Thrilled to see you join our server. Your unique perspective is a valuable addition here. Welcome!
+Welcome, {member_mention}! Your presence here signifies the growth of our community. Let's cultivate a positive and inclusive environment together!
+Hello and a warm welcome to you, {member_mention}! Your journey with us begins now. Let's make it an unforgettable experience!
+Hey {member_mention}, welcome to our server! Your arrival is a cause for celebration. Let's embark on this adventure together!
