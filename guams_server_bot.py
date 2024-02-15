@@ -43,6 +43,7 @@ suggestion_channel_id = 1197426979192971315
 poll_channel_id = 1207205817640816670
 ticket_category_id = 1036929287346999326
 invite_channel_id = 1036762745527357450
+invite_friend_channel_id = 980706628540170282
 
 # Bot Path Info
 base_path = '/home/kali/GuamsServerBot/'
@@ -75,6 +76,29 @@ async def send_embed(ctx_or_channel, title, description, color=discord.Color.red
         # Otherwise, send the embed to the author's channel
         return await ctx_or_channel.send(embed=embed)
 
+# Embed Creator
+async def send_complex_embed(ctx_or_channel, title, description, color=discord.Color.red(), thumbnail=None, fields=None):
+    if isinstance(ctx_or_channel, discord.TextChannel):
+        # If ctx_or_channel is a TextChannel, set author to None
+        author = None
+    else:
+        author = ctx_or_channel.author if hasattr(ctx_or_channel, 'author') else None
+    
+    embed = discord.Embed(title=title, description=description, color=color)
+    if author:
+        embed.set_author(name=author.name, icon_url=author.avatar.url)
+    if thumbnail:
+        embed.set_thumbnail(url=thumbnail)
+    if fields:
+        for value, inline in fields:
+            embed.add_field(name='\u200b', value=value, inline=inline)
+    if isinstance(ctx_or_channel, discord.TextChannel):
+        # If ctx_or_channel is a TextChannel, send the embed directly
+        return await ctx_or_channel.send(embed=embed)
+    else:
+        # Otherwise, send the embed to the author's channel
+        return await ctx_or_channel.send(embed=embed)
+
 # Read voice channel IDs from the file
 with open('silenced_servers.txt', 'r') as f:
     target_voice_channel_ids = [line.strip() for line in f]
@@ -94,10 +118,8 @@ async def on_voice_state_update(member, before, after):
 
         if after.channel and after.channel.id == int(channel_id):
             await member.add_roles(silenced_role)
-            print(f'Assigned {silenced_role_name} role to {member.display_name} in voice channel {after.channel.name}')
         elif before.channel and before.channel.id == int(channel_id):
             await member.remove_roles(silenced_role)
-            print(f'Removed {silenced_role_name} role from {member.display_name} in voice channel {before.channel.name}')
 
 # Welcome Messages
 @client.event
@@ -116,215 +138,6 @@ async def on_member_remove(member):
     if goodbye_channel:
         embed = discord.Embed(title="Goodbye!", description=goodbye_message, color=discord.Color.red())
         await goodbye_channel.send(embed=embed)
-
-# Event listener to handle reaction events
-@client.event
-async def on_raw_reaction_add(payload):
-    # Check if the reaction event is from a guild (server)
-    if payload.guild_id is None:
-        return
-
-    # Get the channel object based on the channel ID from the payload
-    channel = client.get_channel(payload.channel_id)
-    if not channel:
-        return
-
-    # Get the message object based on the message ID from the payload
-    message = await channel.fetch_message(payload.message_id)
-    if not message:
-        return
-
-    # Get the member object from the payload
-    guild = client.get_guild(payload.guild_id)
-    member = guild.get_member(payload.user_id)
-    if not member:
-        return
-
-    # Check if the message is the one you sent and handle reactions accordingly
-    if message.author == client.user:
-        # Check the reaction emoji and assign roles based on the emoji
-        if payload.emoji.name == 'Lethal':
-            lethal_role = discord.utils.get(guild.roles, name='Lethal Company')
-            if lethal_role:
-                await member.add_roles(lethal_role)
-        if payload.emoji.name == 'DBD':
-            dbd_role = discord.utils.get(guild.roles, name='Dead By Daylight')
-            if dbd_role:
-                await member.remove_roles(dbd_role)
-        if payload.emoji.name == 'Splitgate':
-            dbd_role = discord.utils.get(guild.roles, name='Splitgate')
-            if Splitgate_role:
-                await member.remove_roles(Splitgate_role)
-        elif payload.emoji.name == 'Baldurs':
-            baldurs_role = discord.utils.get(guild.roles, name="Baldur's Gate 3")
-            if baldurs_role:
-                await member.add_roles(baldurs_role)
-        elif payload.emoji.name == 'BOTC':
-            botc_role = discord.utils.get(guild.roles, name='Blood on The Clocktower')
-            if botc_role:
-                await member.add_roles(botc_role)
-        elif payload.emoji.name == 'COC':
-            coc_role = discord.utils.get(guild.roles, name='COC')
-            if coc_role:
-                await member.add_roles(coc_role)
-        elif payload.emoji.name == 'money_with_wings':
-            money_role = discord.utils.get(guild.roles, name='Server Economy')
-            if money_role:
-                await member.add_roles(money_role)
-        elif payload.emoji.name == 'red_circle':
-            red_role = discord.utils.get(guild.roles, name='Red')
-            if red_role:
-                await member.add_roles(red_role)
-        elif payload.emoji.name == 'yellow_circle':
-            yellow_role = discord.utils.get(guild.roles, name='Yellow')
-            if yellow_role:
-                await member.add_roles(yellow_role)
-        elif payload.emoji.name == 'green_circle':
-            green_role = discord.utils.get(guild.roles, name='Green')
-            if green_role:
-                await member.add_roles(green_role)
-        elif payload.emoji.name == 'blue_circle':
-            blue_role = discord.utils.get(guild.roles, name='Blue')
-            if blue_role:
-                await member.add_roles(blue_role)
-        elif payload.emoji.name == 'purple_circle':
-            purple_role = discord.utils.get(guild.roles, name='Purple')
-            if purple_role:
-                await member.add_roles(purple_role)
-        elif payload.emoji.name == 'free':
-            free_role = discord.utils.get(guild.roles, name='Free Games')
-            if free_role:
-                await member.add_roles(free_role)
-        elif payload.emoji.name == 'bell':
-            bell_role = discord.utils.get(guild.roles, name='Game Notifications')
-            if bell_role:
-                await member.add_roles(bell_role)
-
-# Event listener to handle reaction removal events
-@client.event
-async def on_raw_reaction_remove(payload):
-    # Check if the reaction event is from a guild (server)
-    if payload.guild_id is None:
-        return
-
-    # Get the channel object based on the channel ID from the payload
-    channel = client.get_channel(payload.channel_id)
-    if not channel:
-        return
-
-    # Get the message object based on the message ID from the payload
-    message = await channel.fetch_message(payload.message_id)
-    if not message:
-        return
-
-    # Get the member object from the payload
-    guild = client.get_guild(payload.guild_id)
-    member = guild.get_member(payload.user_id)
-    if not member:
-        return
-
-    # Check if the message is the one you sent and handle reactions accordingly
-    if message.author == client.user:
-        # Check the reaction emoji and remove roles based on the emoji
-        if payload.emoji.name == 'Lethal':
-            lethal_role = discord.utils.get(guild.roles, name='Lethal Company')
-            if lethal_role:
-                await member.remove_roles(lethal_role)
-        if payload.emoji.name == 'DBD':
-            dbd_role = discord.utils.get(guild.roles, name='Dead By Daylight')
-            if dbd_role:
-                await member.remove_roles(dbd_role)
-        if payload.emoji.name == 'Splitgate':
-            dbd_role = discord.utils.get(guild.roles, name='Splitgate')
-            if Splitgate_role:
-                await member.remove_roles(Splitgate_role)
-        elif payload.emoji.name == 'Baldurs':
-            baldurs_role = discord.utils.get(guild.roles, name="Baldur's Gate 3")
-            if baldurs_role:
-                await member.remove_roles(baldurs_role)
-        elif payload.emoji.name == 'BOTC':
-            botc_role = discord.utils.get(guild.roles, name='Blood on The Clocktower')
-            if botc_role:
-                await member.remove_roles(botc_role)
-        elif payload.emoji.name == 'COC':
-            coc_role = discord.utils.get(guild.roles, name='COC')
-            if coc_role:
-                await member.remove_roles(coc_role)
-        elif payload.emoji.name == 'money_with_wings':
-            money_role = discord.utils.get(guild.roles, name='Server Economy')
-            if money_role:
-                await member.remove_roles(money_role)
-        elif payload.emoji.name == 'red_circle':
-            red_role = discord.utils.get(guild.roles, name='Red')
-            if red_role:
-                await member.remove_roles(red_role)
-        elif payload.emoji.name == 'yellow_circle':
-            yellow_role = discord.utils.get(guild.roles, name='Yellow')
-            if yellow_role:
-                await member.remove_roles(yellow_role)
-        elif payload.emoji.name == 'green_circle':
-            green_role = discord.utils.get(guild.roles, name='Green')
-            if green_role:
-                await member.remove_roles(green_role)
-        elif payload.emoji.name == 'blue_circle':
-            blue_role = discord.utils.get(guild.roles, name='Blue')
-            if blue_role:
-                await member.remove_roles(blue_role)
-        elif payload.emoji.name == 'purple_circle':
-            purple_role = discord.utils.get(guild.roles, name='Purple')
-            if purple_role:
-                await member.remove_roles(purple_role)
-        elif payload.emoji.name == 'free':
-            free_role = discord.utils.get(guild.roles, name='Free Games')
-            if free_role:
-                await member.remove_roles(free_role)
-        elif payload.emoji.name == 'bell':
-            bell_role = discord.utils.get(guild.roles, name='Game Notifications')
-            if bell_role:
-                await member.remove_roles(bell_role)
-
-# Send a message as the Bot
-@client.command()
-async def send_bot_message(ctx, *, args):
-    # Split the arguments into title and bodies
-    split_args = args.split(':')
-
-    if len(split_args) < 2:
-        await ctx.send("Please provide both title and message separated by a colon (':').")
-        return
-
-    title = split_args[0].strip()
-
-    # Extract the bodies
-    bodies = [body.strip() for body in split_args[1:]]
-
-    # Creating the embed
-    embed = discord.Embed(title=title, color=discord.Color.red())
-
-    # Adding bodies as fields to the embed
-    for body in bodies:
-        embed.add_field(name='\u200b', value=body, inline=False)
-
-    await ctx.send(embed=embed)
-    await ctx.message.delete()
-
-# Add Reaction Emojis to Messages
-@client.command()
-async def add_reactions(ctx, message_id: int, *emojis):
-    # Fetch the message object based on the provided message ID
-    try:
-        message = await ctx.channel.fetch_message(message_id)
-    except discord.NotFound:
-        await ctx.send("Message not found.")
-        return
-
-    # Add reactions to the message
-    for emoji in emojis:
-        try:
-            await message.add_reaction(emoji)
-        except discord.HTTPException:
-            await ctx.send(f"Failed to add reaction for emoji: {emoji}")
-    await ctx.message.delete()
 
 #Command List
 @client.command()
@@ -634,7 +447,7 @@ async def unmute(ctx):
             message = random.choice(unmute_messages)
             # Replace placeholders with role mention
             message = message.replace("{role}", silenced_role.mention)
-            embed = discord.Embed(title=":lound_sound: Unmute", description=message, color=discord.Color.green())
+            embed = discord.Embed(title=":loud_sound: Unmute", description=message, color=discord.Color.green())
             await ctx.send(embed=embed)
     await ctx.message.delete()
 
@@ -649,6 +462,42 @@ async def invite(ctx):
             if role:
                 # Fetch the invite channel using the ID
                 invite_channel = ctx.guild.get_channel(invite_channel_id)
+                
+                if invite_channel:
+                    # Load a random message from 'game_messages.txt'
+                    message_filepath = os.path.join(base_path, message_folder, 'game_messages.txt')
+                    random_message = random.choice(load_random_messages(message_filepath))  # Choose a random message from the file
+
+                    # Format the message with actual values
+                    formatted_message = random_message.format(
+                        user_mention=ctx.author.mention,  # Mention the user who initiated the invite
+                        game_name=game,  # The name of the game the user is playing
+                        voice_channel_mention=voice_channel.mention,  # Mention the voice channel
+                        role_mention=role.mention  # Mention the role associated with the game
+                    )
+
+                    await send_embed(invite_channel, "Game Invitation", formatted_message, color=discord.Color.green())
+                else:
+                    await ctx.send("Invite channel not found.")
+            else:
+                await ctx.send(f"No role found for {game}.")
+        else:
+            await ctx.send("You need to be playing a game to use this command.")
+    else:
+        await ctx.send("You need to be in a voice channel to use this command.")
+    await ctx.message.delete()
+    
+# Game Invite Command
+@client.command()
+async def invite_friends(ctx):
+    if ctx.author.voice is not None:  # Check if the author is in a voice channel
+        voice_channel = ctx.author.voice.channel  # Get the voice channel the user is in
+        game = ctx.author.activity.name if ctx.author.activity else None
+        if game:
+            role = discord.utils.get(ctx.guild.roles, name=game)
+            if role:
+                # Fetch the invite channel using the ID
+                invite_channel = ctx.guild.get_channel(invite_friend_channel_id)
                 
                 if invite_channel:
                     # Load a random message from 'game_messages.txt'
