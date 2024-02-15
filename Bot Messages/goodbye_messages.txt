@@ -1,2 +1,9 @@
 Goodbye {member_mention}, we'll miss you!
 Sad to see you leave, {member_mention}. Take care!
+Farewell, {member_mention}! Wishing you all the best on your journey ahead.
+Until we meet again, {member_mention}! Stay safe out there!
+Bon voyage, {member_mention}! May your path be filled with happiness and success.
+Adieu, {member_mention}! Your presence will be greatly missed. Take care!
+Safe travels, {member_mention}! Remember, you're always welcome back.
+Fare thee well, {member_mention}! Your contributions won't be forgotten.
+Wishing you a smooth journey, {member_mention}. Farewell for now!
