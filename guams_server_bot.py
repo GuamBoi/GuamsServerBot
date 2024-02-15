@@ -50,32 +50,10 @@ message_folder = 'Bot Messages/'
 ticket_messages = load_random_messages(os.path.join(base_path, message_folder, 'ticket_messages.txt'))
 timer_messages = load_random_messages(os.path.join(base_path, message_folder, 'timer_messages.txt'))
 ticket_logs_folder = '/home/kali/GuamsServerBot/Ticket Logs/'
+conversation_commands = '/home/kali/GuamsServerBot/'
 
 # Embed Creator
-async def send_complex_embed(ctx_or_channel, title, description, color=discord.Color.red(), thumbnail=None, fields=None):
-    if isinstance(ctx_or_channel, discord.TextChannel):
-        # If ctx_or_channel is a TextChannel, set author to None
-        author = None
-    else:
-        author = ctx_or_channel.author if hasattr(ctx_or_channel, 'author') else None
-    
-    embed = discord.Embed(title=title, description=description, color=color)
-    if author:
-        embed.set_author(name=author.name, icon_url=author.avatar.url)
-    if thumbnail:
-        embed.set_thumbnail(url=thumbnail)
-    if fields:
-        for value, inline in fields:
-            embed.add_field(name='\u200b', value=value, inline=inline)
-    if isinstance(ctx_or_channel, discord.TextChannel):
-        # If ctx_or_channel is a TextChannel, send the embed directly
-        return await ctx_or_channel.send(embed=embed)
-    else:
-        # Otherwise, send the embed to the author's channel
-        return await ctx_or_channel.send(embed=embed)
-
-# Complex Embed Creator
-async def send_complex_embed(ctx_or_channel, title, description, color=discord.Color.red(), thumbnail=None, fields=None):
+async def send_embed(ctx_or_channel, title, description, color=discord.Color.red(), thumbnail=None, fields=None):
     if isinstance(ctx_or_channel, discord.TextChannel):
         # If ctx_or_channel is a TextChannel, set author to None
         author = None
