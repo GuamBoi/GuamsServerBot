@@ -1,5 +1,10 @@
 Thank you {user_mention} for reaching out to us. We'll assist you shortly.
 Please describe your issue or question in detail, {user_mention}.
-Our support team will do their best to help you as soon as possible, {user_mention}.
-We appreciate your patience while we look into this for you, {user_mention}.
-Feel free to provide any additional information that might help us resolve your issue faster, {user_mention}.
+Appreciate your message, {user_mention}! Our team will be with you in no time to address your concerns.
+Thanks for getting in touch, {user_mention}! Your patience is valued as we work to resolve your inquiry.
+We're grateful for your contact, {user_mention}! Rest assured, we're here to provide the assistance you need.
+Your outreach means a lot, {user_mention}! Sit tight while we gather the necessary information to assist you effectively.
+Big thanks for reaching out, {user_mention}! To expedite the process, please provide as much detail as possible regarding your issue.
+We appreciate you getting in touch, {user_mention}! The more information you can provide about your question or concern, the better we can assist you.
+Thank you, {user_mention}, for getting in contact with us! Your inquiry is important, and we're here to help you promptly.
+Your message is received, {user_mention}! To better assist you, please elaborate on your issue or question so we can address it accurately
