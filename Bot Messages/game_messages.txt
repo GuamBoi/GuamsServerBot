@@ -1,1 +1,10 @@
-{user_mention} is playing {game_name} in the {voice_channel_mention} chat! Come join them {role_mention} players!
+🎮 {user_mention} is playing {game_name} in the {voice_channel_mention} chat! Come join them {role_mention} players!
+🕹️ Hey {role_mention} Gamers! {user_mention} is playing {game_name} in the {voice_channel_mention} chat! Come game with them!
+🎮 Attention {role_mention} gamers! Join {user_mention} in the {voice_channel_mention} chat for some epic rounds of {game_name}! Let's dominate together!
+🕹️ Brace yourselves, {role_mention} players! {user_mention} is diving into {game_name} over in the {voice_channel_mention} chat. Don't miss out on the action!
+🎮 Calling all {role_mention} gamers! Head over to {voice_channel_mention} and team up with {user_mention} for an intense session of {game_name}!
+🕹️ Ready to level up, {role_mention} crew? Join {user_mention} for a thrilling session of {game_name} in {voice_channel_mention} now!
+🎮 Attention {role_mention} gamers! {user_mention} is hosting a {game_name} party in {voice_channel_mention}! Grab your gear and let's get this party started!
+🕹️ Gather 'round, {role_mention} gamers! {user_mention} has launched into {game_name} in {voice_channel_mention}. Join the fun and let's conquer the virtual realm together!
+🎮 Hey {role_mention} warriors! {user_mention} awaits your valor in {voice_channel_mention}, ready to embark on a {game_name} adventure! Join the quest now!
+🕹️ Attention all {role_mention} gamers! {user_mention} has fired up {game_name} in {voice_channel_mention}! Rally your squad and let's show them what we're made of!
