@@ -8,7 +8,7 @@ import logging
 import os
 import asyncio
 
-bot_version = 'Beta 1.0'
+bot_version = '1.0 BETA'
 
 # Intents
 intents = discord.Intents.all()
