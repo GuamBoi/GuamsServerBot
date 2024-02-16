@@ -62,7 +62,6 @@ message_folder = 'Bot Messages/'
 ticket_messages = load_random_messages(os.path.join(base_path, message_folder, 'ticket_messages.txt'))
 timer_messages = load_random_messages(os.path.join(base_path, message_folder, 'timer_messages.txt'))
 ticket_logs_folder = '/home/kali/GuamsServerBot/Ticket Logs/'
-conversation_commands = '/home/kali/GuamsServerBot/'
 
 # Embed Creator
 async def send_embed(ctx_or_channel, title, description, color=discord.Color.red(), thumbnail=None, fields=None):
