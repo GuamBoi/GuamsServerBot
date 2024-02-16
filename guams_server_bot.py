@@ -35,6 +35,8 @@ async def on_ready():
 # Logging Configuration ???
 logging.basicConfig(level=logging.INFO)
 
+### RANDOM MESSAGE FUNCTION ###
+
 # Loading Random Messages Function
 def load_random_messages(filepath):
     try:
@@ -46,12 +48,15 @@ def load_random_messages(filepath):
         logging.error(f"File '{filepath}' not found.")
         return []
 
+### PATHING AND REFRENCE INFO ###
+
 # Channel IDs
 welcome_channel_id = 1036760459161911366
 goodbye_channel_id = 1206374744719626361
 suggestion_channel_id = 1197426979192971315
 poll_channel_id = 1207205817640816670
-ticket_category_id = 1036929287346999326
+ticket_category_id = 1036929287346999326 # Should Match
+command_help_category_id = 1036929287346999326 # Should Match
 invite_channel_id = 1036762745527357450
 invite_friend_channel_id = 980706628540170282
 poll_friends_channel_id = 980706628540170282
@@ -62,6 +67,9 @@ message_folder = 'Bot Messages/'
 ticket_messages = load_random_messages(os.path.join(base_path, message_folder, 'ticket_messages.txt'))
 timer_messages = load_random_messages(os.path.join(base_path, message_folder, 'timer_messages.txt'))
 ticket_logs_folder = '/home/kali/GuamsServerBot/Ticket Logs/'
+conversation_commands = '/home/kali/GuamsServerBot/'
+
+### FUNCTIONS ###
 
 # Embed Creator
 async def send_embed(ctx_or_channel, title, description, color=discord.Color.red(), thumbnail=None, fields=None):
@@ -113,6 +121,8 @@ async def send_complex_embed(ctx_or_channel, title, description, color=discord.C
 with open('silenced_servers.txt', 'r') as f:
     target_voice_channel_ids = [line.strip() for line in f]
 
+### AUTO COMMANDS ###
+
 # Auto Give @Silenced roll when joining a Voice Channel
 @client.event
 async def on_voice_state_update(member, before, after):
@@ -130,6 +140,8 @@ async def on_voice_state_update(member, before, after):
             await member.add_roles(silenced_role)
         elif before.channel and before.channel.id == int(channel_id):
             await member.remove_roles(silenced_role)
+
+### WELCOME AND GOODBYE MESSAGES ###
 
 # Welcome Messages
 @client.event
@@ -149,7 +161,7 @@ async def on_member_remove(member):
         embed = discord.Embed(title=":wave: Goodbye!", description=goodbye_message, color=discord.Color.red())
         await goodbye_channel.send(embed=embed)
 
-### GENERAL COMMANDS ###
+### COMMAND LISTS - FRIEND AND MOD LISTS ###
 
 #Command List
 @client.command()
@@ -199,7 +211,7 @@ async def roll_commands(ctx):
     await ctx.send(embed=embed)
     await ctx.message.delete()
 
-# Dice Message Paths
+# Message Paths
 D4_messages = load_random_messages(os.path.join(base_path, message_folder, 'D4_messages.txt'))
 D6_messages = load_random_messages(os.path.join(base_path, message_folder, 'D6_messages.txt'))
 D8_messages = load_random_messages(os.path.join(base_path, message_folder, 'D8_messages.txt'))
@@ -210,7 +222,9 @@ coinflip_messages = load_random_messages(os.path.join(base_path, message_folder,
 welcome_messages = load_random_messages(os.path.join(base_path, message_folder, 'welcome_messages.txt'))
 goodbye_messages = load_random_messages(os.path.join(base_path, message_folder, 'goodbye_messages.txt'))
 
-# Dice Commands
+### DICE COMMANDS ###
+
+# D4 Command
 @client.command()
 async def d4(ctx):
     if D4_messages:
@@ -280,6 +294,8 @@ async def coinflip(ctx):
         await send_embed(ctx, "Coin Flip", "No messages available for coin flipping.")
     await ctx.message.delete()
 
+### SUGGESTION AND POLL COMMANDS ###
+
 # Create Suggestions Command
 @client.command()
 async def suggest(ctx, *, question):
@@ -311,6 +327,8 @@ async def poll(ctx, *, question):
         await ctx.message.delete()
     else:
         await ctx.send("Poll channel not found.")
+
+### TICKET COMMANDS ###
 
 # Create Tickets Command
 @client.command()
@@ -348,38 +366,6 @@ async def ticket(ctx):
 
     await ctx.message.delete()
 
-# Delete Ticket Command
-@client.command()
-async def delete_ticket(ctx):
-    if isinstance(ctx.channel, discord.TextChannel) and ctx.channel.category.name == "Tickets":
-        await ctx.channel.delete()
-    else:
-        await ctx.send("This command can only be used in a ticket channel.")
-
-# Log Tocket Command
-@client.command()
-async def log_ticket(ctx):
-    if isinstance(ctx.channel, discord.TextChannel) and ctx.channel.category.name == "Tickets":
-        if not os.path.exists(ticket_logs_folder):
-            os.makedirs(ticket_logs_folder)
-
-        filename = f"{ctx.channel.name}.txt"
-        filepath = os.path.join(ticket_logs_folder, filename)
-
-        messages = []
-        async for message in ctx.channel.history(limit=None):
-            messages.append(f"{message.created_at} - {message.author.display_name}: {message.content}")
-
-        messages.reverse()
-
-        with open(filepath, 'w') as file:
-            file.write("\n".join(messages))
-
-        await ctx.send(f"This conversation has been logged by a mod.")
-    else:
-        await ctx.send("This command can only be used in a ticket channel.")
-    await ctx.message.delete()
-
 # Timer Command
 @client.command()
 async def timer(ctx, time_duration):
@@ -407,6 +393,8 @@ async def timer(ctx, time_duration):
 timer_messages_filepath = os.path.join(base_path, message_folder, 'timer_messages.txt')
 with open(timer_messages_filepath, 'r') as file:
     timer_messages = [line.strip() for line in file]
+
+### VOICE CHANNEL COMMANDS ###
 
 # Mute Command
 @client.command()
@@ -588,28 +576,76 @@ class Moderation(commands.Cog):
     def __init__(self, client):
         self.client = client
 
+    async def send_embed_message(self, ctx, title, description, color):
+        embed = discord.Embed(title=title, description=description, color=color)
+        await ctx.send(embed=embed)
+
+    async def send_error_message(self, ctx, error_message):
+        await self.send_embed_message(ctx, ":x: Error", error_message, discord.Color.red())
+        await ctx.message.delete()
+
     async def check_permissions(self, ctx):
         moderator_role_name = "Moderator"  # Replace with the actual name of your moderator role
         moderator_role = discord.utils.get(ctx.guild.roles, name=moderator_role_name)
         if moderator_role in ctx.author.roles:
             return True
         else:
-            embed = discord.Embed(title=":x: Insufficient Permissions", description="You don't have permission to use this command. If you thin this is an error please Message one of the Moderators.", color=discord.Color.red())
-            await ctx.send(embed=embed)
+            await self.send_error_message(ctx, "You don't have permission to use this command. If you think this is an error, please message one of the Moderators.")
             return False
+        await ctx.message.delete()
 
     # Mod Command List
     @commands.command()
-    async def mod_commands(self, ctx):  # Added 'self' parameter
+    async def mod_commands(self, ctx):
         if await self.check_permissions(ctx):
             embed = discord.Embed(title="Special Moderator Commands", color=discord.Color.red())
+            embed.add_field(name=":wastebasket: !delete_ticket", value="Deletes the ticket you are responding to.", inline=False)
+            embed.add_field(name=":scroll: !log_ticket", value="Logs the ticket you are responding to.", inline=False)
             embed.add_field(name=":hourglass: !timeout <username> <time in seconds> <reason>", value="Puts a user in 'timeout' for a set duration of time.", inline=False)
             embed.add_field(name="!:boot: kick <username> <reason>", value="Kicks a user from the server", inline=False)
             embed.add_field(name=":no_entry_sign: !ban <username> <reason>", value="Bans a user from the server", inline=False)
-            embed.set_footer(text=f"Bot Version: {bot_version}")
+            embed.set_footer(text=f"Bot Version: {bot_version}")  # Make sure bot_version is defined
             await ctx.send(embed=embed)
+        await ctx.message.delete()
+
+    # Log Ticket Command
+    @commands.command()
+    async def log_ticket(self, ctx):
+        if await self.check_permissions(ctx):
+            if isinstance(ctx.channel, discord.TextChannel) and ctx.channel.category_id == ticket_category_id:  # Make sure ticket_category_id is defined
+                if not os.path.exists(ticket_logs_folder):  # Make sure ticket_logs_folder is defined
+                    os.makedirs(ticket_logs_folder)
+
+                filename = f"{ctx.channel.name}.txt"
+                filepath = os.path.join(ticket_logs_folder, filename)
+
+                messages = []
+                async for message in ctx.channel.history(limit=None):
+                    messages.append(f"{message.created_at} - {message.author.display_name}: {message.content}")
+
+                messages.reverse()
+
+                with open(filepath, 'w') as file:
+                    file.write("\n".join(messages))
+
+                embed = discord.Embed(title=":scroll: Conversation Logged", description="This conversation has been logged by a mod.", color=discord.Color.green())
+                await ctx.send(embed=embed)
+            else:
+                await self.send_error_message(ctx, "This command can only be used in a ticket channel.")
             await ctx.message.delete()
 
+    # Delete Ticket Command
+    @commands.command()
+    async def delete_ticket(self, ctx):
+        if await self.check_permissions(ctx):
+            if isinstance(ctx.channel, discord.TextChannel) and ctx.channel.category_id == ticket_category_id:  # Make sure ticket_category_id is defined
+                try:
+                    await ctx.channel.delete()
+                except discord.NotFound:
+                    pass  # Channel already deleted, no need to delete it again
+            else:
+                await self.send_error_message(ctx, "This command can only be used in a ticket channel.")
+    
     # Timeout Command
     @commands.command()
     async def timeout(self, ctx, member: discord.Member, duration: int, *, reason="No reason provided."):
@@ -622,11 +658,10 @@ class Moderation(commands.Cog):
                 await asyncio.sleep(duration)
                 await member.edit(mute=False)
             except discord.Forbidden:
-                await ctx.send("I don't have the necessary permissions to timeout members.")
+                await self.send_error_message(ctx, "I don't have the necessary permissions to timeout members.")
             except Exception as e:
-                await ctx.send(f"An error occurred: {e}")
+                await self.send_error_message(ctx, f"An error occurred: {e}")
             await ctx.message.delete()
-        await ctx.message.delete()
 
     # Kick Command
     @commands.command()
@@ -638,11 +673,10 @@ class Moderation(commands.Cog):
                 embed.add_field(name="Reason", value=reason)
                 await ctx.send(embed=embed)
             except discord.Forbidden:
-                await ctx.send("I don't have the necessary permissions to kick members.")
+                await self.send_error_message(ctx, "I don't have the necessary permissions to kick members.")
             except Exception as e:
-                await ctx.send(f"An error occurred: {e}")
+                await self.send_error_message(ctx, f"An error occurred: {e}")
             await ctx.message.delete()
-        await ctx.message.delete()
 
     # Ban Command
     @commands.command()
@@ -654,11 +688,10 @@ class Moderation(commands.Cog):
                 embed.add_field(name="Reason", value=reason)
                 await ctx.send(embed=embed)
             except discord.Forbidden:
-                await ctx.send("I don't have the necessary permissions to ban members.")
+                await self.send_error_message(ctx, "I don't have the necessary permissions to ban members.")
             except Exception as e:
-                await ctx.send(f"An error occurred: {e}")
+                await self.send_error_message(ctx, f"An error occurred: {e}")
             await ctx.message.delete()
-        await ctx.message.delete()
-    
+
 # Bot Token
 client.run('YOUR_DISCORD_BOT_TOKEN')
