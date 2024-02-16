@@ -8,6 +8,8 @@ import logging
 import os
 import asyncio
 
+bot_version = 'Beta 1.0'
+
 # Intents
 intents = discord.Intents.all()
 intents.voice_states = True
@@ -38,6 +40,7 @@ def load_random_messages(filepath):
     try:
         with open(filepath, 'r') as file:
             messages = file.readlines()
+
         return [message.strip() for message in messages]
     except FileNotFoundError:
         logging.error(f"File '{filepath}' not found.")
@@ -51,6 +54,7 @@ poll_channel_id = 1207205817640816670
 ticket_category_id = 1036929287346999326
 invite_channel_id = 1036762745527357450
 invite_friend_channel_id = 980706628540170282
+poll_friends_channel_id = 980706628540170282
 
 # Bot Path Info
 base_path = '/home/kali/GuamsServerBot/'
@@ -58,6 +62,7 @@ message_folder = 'Bot Messages/'
 ticket_messages = load_random_messages(os.path.join(base_path, message_folder, 'ticket_messages.txt'))
 timer_messages = load_random_messages(os.path.join(base_path, message_folder, 'timer_messages.txt'))
 ticket_logs_folder = '/home/kali/GuamsServerBot/Ticket Logs/'
+conversation_commands = '/home/kali/GuamsServerBot/'
 
 # Embed Creator
 async def send_embed(ctx_or_channel, title, description, color=discord.Color.red(), thumbnail=None, fields=None):
@@ -160,6 +165,7 @@ async def commands(ctx):
     embed.add_field(name=":game_die: !dice_commands", value="Lists all the dice commands", inline=False)
     embed.add_field(name=":loud_sound: !voice_commands", value="Lists all the Voice Chat Commands", inline=False)
     embed.add_field(name=":crown: !roll_commands", value="A list of Roll Specific Commands", inline=False)
+    embed.set_footer(text=f"Bot Version: {bot_version}")
     await ctx.send(embed=embed)
     await ctx.message.delete()
 
@@ -283,7 +289,7 @@ async def suggest(ctx, *, question):
     if suggestion_channel:
         embed = discord.Embed(title="Server Suggestion", description=question, color=discord.Color.red())
         embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
-        embed.add_field(name="Everyone can vote!", value="👍 Yes    👎 No", inline=False)
+        embed.add_field(name="Everyone can Vote on Suggestions!!", value="👍 Yes    👎 No", inline=False)
         message = await suggestion_channel.send(embed=embed)
         await message.add_reaction('👍')
         await message.add_reaction('👎')
@@ -299,10 +305,10 @@ async def poll(ctx, *, question):
     if poll_channel:
         embed = discord.Embed(title="Server Poll", description=question, color=discord.Color.red())
         embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
-        embed.add_field(name="Everyone can vote!", value="👍 Yes    👎 No", inline=False)
+        embed.add_field(name="Everyone can Vote in Polls!", value="✅ Yes    ❌ No", inline=False)
         message = await poll_channel.send(embed=embed)
-        await message.add_reaction('👍')
-        await message.add_reaction('👎')
+        await message.add_reaction('✅')
+        await message.add_reaction('❌')
         await ctx.message.delete()
     else:
         await ctx.send("Poll channel not found.")
@@ -521,8 +527,28 @@ class FriendCommands(commands.Cog):
     async def friend_commands(self, ctx):
         embed = discord.Embed(title="Special Friend Commands", color=discord.Color.red())
         embed.add_field(name=":incoming_envelope: !invite_friends", value="Invites users to play the game your playing in the #friend-chat", inline=False)
+        embed.add_field(name=":bar_chart: !poll_friends", value="Sends a Poll to the #friend-chat", inline=False)
+        embed.set_footer(text=f"Bot Version: {bot_version}")
         await ctx.send(embed=embed)
         await ctx.message.delete()
+    
+    # Create Polls Command
+    @commands.command()
+    @commands.has_role(friend_role_name)
+    async def poll_friends(Self, ctx, *, question):
+        poll_channel = client.get_channel(poll_friends_channel_id)
+    
+        if poll_channel:
+            embed = discord.Embed(title="Server Poll", description=question, color=discord.Color.red())
+            embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
+            embed.add_field(name="Everyone can vote!", value="✅ Yes    ❌ No", inline=False)
+            message = await poll_channel.send(embed=embed)
+            await message.add_reaction('✅')
+            await message.add_reaction('❌')
+            await ctx.message.delete()
+        else:
+            await ctx.send("Poll channel not found.")
+
 
     # Game Invite Command
     @commands.command()
@@ -581,6 +607,7 @@ class Moderation(commands.Cog):
             embed.add_field(name=":hourglass: !timeout <username> <time in seconds> <reason>", value="Puts a user in 'timeout' for a set duration of time.", inline=False)
             embed.add_field(name="!:boot: kick <username> <reason>", value="Kicks a user from the server", inline=False)
             embed.add_field(name=":no_entry_sign: !ban <username> <reason>", value="Bans a user from the server", inline=False)
+            embed.set_footer(text=f"Bot Version: {bot_version}")
             await ctx.send(embed=embed)
             await ctx.message.delete()
 
