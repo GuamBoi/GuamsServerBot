@@ -1,0 +1,2 @@
+Hi {user_mention}! I'm your personal command assistant! Please specify the command you need help with by using `!explain <!command_you_need_help_with>`. When you finish please use `!end`. Example: `!explain !command_help`
+Hello {user_mention}! I can explain all of the commands I offer in detail for you here! Just type `!explain <!command_you_need_help_with>`to get a deeper explanation for every command. When you finish please use `!end`. Example: `!explain !command_help`
