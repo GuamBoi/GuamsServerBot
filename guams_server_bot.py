@@ -1,6 +1,9 @@
 #Import List
 import discord
 from discord.ext import commands
+
+# Other Imports
+from command_explanations import commands_data
 from discord.ext.commands import Command
 from discord.ext.commands import Cog
 import random
@@ -8,9 +11,7 @@ import logging
 import os
 import asyncio
 
-bot_version = '1.0 BETA'
-
-# Intents
+# Initialize the bot with intents
 intents = discord.Intents.all()
 intents.voice_states = True
 
@@ -25,15 +26,15 @@ friend_role_name = 'Friend'  # Name of the role for friends
 #Bot Boot Info / Playing Title
 @client.event
 async def on_ready():
-    logging.info("Hello World! It's a Great Day to be Alive!")
+    logging.info('Hello World! It\'s a Great Day to be Alive!')
     command_info = "Type '!commands' to see available commands."
     await client.change_presence(activity=discord.Game(name=command_info))
-
     await client.add_cog(FriendCommands(client))
     await client.add_cog(Moderation(client))
     
 # Logging Configuration ???
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 ### RANDOM MESSAGE FUNCTION ###
 
@@ -50,11 +51,20 @@ def load_random_messages(filepath):
 
 ### PATHING AND REFRENCE INFO ###
 
+available_commands = ['!commands', '!suggest', '!poll', '!ticket', '!invite', '!timer', '!coinflip', '!dice_commands', '!d4', '!roll', '!d8', '!d10', '!d12', '!d20', '!voice_commands', '!mute', '!unmute', '!roll_commands', '!friend_commands', 'invite_friends', '!poll_friends', '!mod_commands', '!delete_ticket', '!log_ticket', '!timeout', '!kick', '!ban']
+
+# Version Numbers
+bot_version = '1.0 BETA'
+chat_bot_version = '1.0 BETA'
+
 # Channel IDs
 welcome_channel_id = 1036760459161911366
 goodbye_channel_id = 1206374744719626361
 suggestion_channel_id = 1197426979192971315
+approved_channel_id = 1208292523379003462
+declined_channel_id = 1208315165616115774
 poll_channel_id = 1207205817640816670
+result_channel_id = 1208639938854264852
 ticket_category_id = 1036929287346999326 # Should Match
 command_help_category_id = 1036929287346999326 # Should Match
 invite_channel_id = 1036762745527357450
@@ -63,11 +73,19 @@ poll_friends_channel_id = 980706628540170282
 
 # Bot Path Info
 base_path = '/home/kali/GuamsServerBot/'
+ticket_logs_folder = '/home/kali/GuamsServerBot/Ticket Logs/'
 message_folder = 'Bot Messages/'
 ticket_messages = load_random_messages(os.path.join(base_path, message_folder, 'ticket_messages.txt'))
 timer_messages = load_random_messages(os.path.join(base_path, message_folder, 'timer_messages.txt'))
-ticket_logs_folder = '/home/kali/GuamsServerBot/Ticket Logs/'
-conversation_commands = '/home/kali/GuamsServerBot/'
+welcome_messages = load_random_messages(os.path.join(base_path, message_folder, 'welcome_messages.txt'))
+goodbye_messages = load_random_messages(os.path.join(base_path, message_folder, 'goodbye_messages.txt'))
+D4_messages = load_random_messages(os.path.join(base_path, message_folder, 'D4_messages.txt'))
+D6_messages = load_random_messages(os.path.join(base_path, message_folder, 'D6_messages.txt'))
+D8_messages = load_random_messages(os.path.join(base_path, message_folder, 'D8_messages.txt'))
+D10_messages = load_random_messages(os.path.join(base_path, message_folder, 'D10_messages.txt'))
+D12_messages = load_random_messages(os.path.join(base_path, message_folder, 'D12_messages.txt'))
+D20_messages = load_random_messages(os.path.join(base_path, message_folder, 'D20_messages.txt'))
+coinflip_messages = load_random_messages(os.path.join(base_path, message_folder, 'coinflip.txt'))
 
 ### FUNCTIONS ###
 
@@ -176,6 +194,7 @@ async def commands(ctx):
     embed.add_field(name=":game_die: !dice_commands", value="Lists all the dice commands", inline=False)
     embed.add_field(name=":loud_sound: !voice_commands", value="Lists all the Voice Chat Commands", inline=False)
     embed.add_field(name=":crown: !roll_commands", value="A list of Roll Specific Commands", inline=False)
+    embed.add_field(name=":sos: !help_commands", value="Opens the Command Help Menu", inline=False)
     embed.set_footer(text=f"Bot Version: {bot_version}")
     await ctx.send(embed=embed)
     await ctx.message.delete()
@@ -211,16 +230,105 @@ async def roll_commands(ctx):
     await ctx.send(embed=embed)
     await ctx.message.delete()
 
-# Message Paths
-D4_messages = load_random_messages(os.path.join(base_path, message_folder, 'D4_messages.txt'))
-D6_messages = load_random_messages(os.path.join(base_path, message_folder, 'D6_messages.txt'))
-D8_messages = load_random_messages(os.path.join(base_path, message_folder, 'D8_messages.txt'))
-D10_messages = load_random_messages(os.path.join(base_path, message_folder, 'D10_messages.txt'))
-D12_messages = load_random_messages(os.path.join(base_path, message_folder, 'D12_messages.txt'))
-D20_messages = load_random_messages(os.path.join(base_path, message_folder, 'D20_messages.txt'))
-coinflip_messages = load_random_messages(os.path.join(base_path, message_folder, 'coinflip.txt'))
-welcome_messages = load_random_messages(os.path.join(base_path, message_folder, 'welcome_messages.txt'))
-goodbye_messages = load_random_messages(os.path.join(base_path, message_folder, 'goodbye_messages.txt'))
+### HELP COMMANDS ###
+@client.command()
+async def help_commands(ctx):
+    embed = discord.Embed(title="Help Commands", color=discord.Color.red())
+    embed.add_field(name=":speech_balloon: !command_help", value="Opens a Private chat between you and the Server Bot. There he can answer all of your questions by using the following commands", inline=False)
+    embed.add_field(name=":speaking_head: !explain <!command_you_need_help_with>", value="Explains in depth how to use commands.", inline=False)
+    embed.add_field(name=":octagonal_sign: !end", value="Ends your conversation with the Server Bot", inline=False)
+    embed.set_footer(text=f"Chat Bot Version: {chat_bot_version}")
+    await ctx.send(embed=embed)
+    await ctx.message.delete()
+
+# Help Command List
+
+@client.command()
+async def command_help(ctx):
+    
+    # Get the command help category or return if it doesn't exist
+    category = ctx.guild.get_channel(command_help_category_id)
+    if not category or not isinstance(category, discord.CategoryChannel):
+        await ctx.send("Command help category not found.")
+        return
+
+    # Define permissions for the command help channel
+    overwrites = {
+        ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+        ctx.author: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+        ctx.guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True)
+    }
+
+    # Define the name for the command help channel
+    channel_name = f"Command-Help-{ctx.author.name.replace(' ', '-')}"
+
+    # Create the command help channel under the specified category with the defined permissions
+    command_help_channel = await category.create_text_channel(channel_name, overwrites=overwrites)
+
+    # Define the path to the help messages file
+    help_messages_file = os.path.join(message_folder, 'help_messages.txt')
+
+    # Load random help message from the file
+    help_messages = load_random_messages(help_messages_file)
+
+    if help_messages:
+        # Select a random message from loaded help messages
+        help_message = random.choice(help_messages)
+
+        # Replace {user_mention} with actual user mention
+        help_message = help_message.replace('{user_mention}', ctx.author.mention)
+
+        # Creating an embed for the help message
+        embed = discord.Embed(title=":flag_gu: Command Assistant", description=help_message, color=discord.Color.blue())
+        embed.set_footer(text=f"Chat Bot Version: {chat_bot_version}")
+
+        # Send the embed to the command help channel
+        await command_help_channel.send(embed=embed)
+    else:
+        await command_help_channel.send("It seems the Command Assistant is having Technical Difficulties at the moment. Please ask for Assistance in the `#💬-general-chat`")
+
+    await ctx.message.delete()
+
+# Explain Command
+@client.command()
+async def explain(ctx, command: str):
+    if command in commands_data:
+        details = commands_data[command]
+        embed = discord.Embed(title=details.get('title', 'Command Details'), color=discord.Color.blue())
+        
+        # Add fields to the embed if they exist in the details dictionary
+        if 'command' in details:
+            embed.add_field(name="The command:", value=details['command'], inline=False)
+        if 'description' in details:
+            embed.add_field(name=":scroll: Command Description:", value=details['description'], inline=False)
+        if 'usage' in details:
+            embed.add_field(name=":question: Who can use it?", value=details['usage'], inline=False)
+        if 'channels' in details:
+            embed.add_field(name=":speech_balloon: What Channels does it work in?", value=details['channels'], inline=False)
+        if 'example' in details:
+            embed.add_field(name="Code Example:", value=details['example'], inline=False)
+        
+        embed.set_footer(text=f"Chat Bot Version: {chat_bot_version}")
+        
+        await ctx.send(embed=embed)
+    else:
+        await ctx.send("Command not found.")
+
+# End Command
+@client.command()
+async def end(ctx):
+    # Get the name of the command help channel to delete
+    channel_name = f"command-help-{ctx.author.name.replace(' ', '-')}"
+
+    # Find the command help channel
+    command_help_channel = discord.utils.get(ctx.guild.text_channels, name=channel_name)
+
+    # Check if the channel exists and if the user has permissions to delete it
+    if command_help_channel and command_help_channel.permissions_for(ctx.author).manage_channels:
+        await command_help_channel.delete()
+    else:
+        await ctx.send("Hmm.. I cant seem to find a command-help channel for you... If this is a mistake please notify a Moderator.")
+    await ctx.message.delete()
 
 ### DICE COMMANDS ###
 
@@ -296,37 +404,177 @@ async def coinflip(ctx):
 
 ### SUGGESTION AND POLL COMMANDS ###
 
-# Create Suggestions Command
 @client.command()
 async def suggest(ctx, *, question):
+    print(f'INFO:__main__:Suggestion created by {ctx.author.name}: {question}')
     suggestion_channel = client.get_channel(suggestion_channel_id)
-    
-    if suggestion_channel:
-        embed = discord.Embed(title="Server Suggestion", description=question, color=discord.Color.red())
-        embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
-        embed.add_field(name="Everyone can Vote on Suggestions!!", value="👍 Yes    👎 No", inline=False)
+
+    if not suggestion_channel:
+        await ctx.send("Suggestion channel not found.")
+        return
+
+    try:
+        default_avatar_url = "https://example.com/default_avatar.png"  # Define your default avatar URL here
+
+        embed = discord.Embed(title="Server Suggestion", description=question, color=discord.Color.blue())
+        embed.add_field(name="Reaction Key", value="Voting Reactions: `👍 = Yes` / `👎 = No` \n Mod Reactions: `✅ = Approve` / `❌ = Decline`", inline=False)
+
+        avatar_url = ctx.author.avatar.url if ctx.author.avatar else default_avatar_url
+        embed.set_footer(text=f"Suggested by {ctx.author.name}", icon_url=avatar_url)  # Using the username in the footer
+
         message = await suggestion_channel.send(embed=embed)
         await message.add_reaction('👍')
         await message.add_reaction('👎')
-        await ctx.message.delete()
-    else:
-        await ctx.send("Suggestion channel not found.")
+        await message.add_reaction('✅')  # Approval
+        await message.add_reaction('❌')  # Decline
+
+        success_embed = discord.Embed(title="New Server Suggestion", description=f"{ctx.author.mention} created a new server suggestion! Go vote on it [HERE]({message.jump_url})!", color=discord.Color.green())
+        await ctx.send(embed=success_embed)
+    except Exception as e:
+        error_embed = discord.Embed(title="Error", description=f"An error occurred: {e}", color=discord.Color.red())
+        await ctx.send(embed=error_embed)
+
+@client.event
+async def on_raw_reaction_add(payload):
+    if payload.channel_id == suggestion_channel_id:
+        suggestion_channel = client.get_channel(suggestion_channel_id)
+        message = await suggestion_channel.fetch_message(payload.message_id)
+        guild = client.get_guild(payload.guild_id)
+        member = guild.get_member(payload.user_id)
+
+        # Check if the reacting member has the Moderator role
+        moderator_role = discord.utils.get(guild.roles, name="Moderator")
+        is_moderator = moderator_role in member.roles if moderator_role else False
+
+        if is_moderator and str(payload.emoji) in ['✅', '❌']:
+            # Only moderators can approve or decline suggestions
+            if str(payload.emoji) == '✅':
+                # Handle Approval
+                approved_messages_file = os.path.join('Bot Messages/', 'approved_messages.txt')
+                with open(approved_messages_file, 'r') as file:
+                    approved_messages = file.readlines()
+                    random_approved_message = random.choice(approved_messages).strip()
+                approved_channel = client.get_channel(approved_channel_id)
+
+                suggestion_content = message.embeds[0].description
+                embed = discord.Embed(title=":white_check_mark: Approved Suggestion", color=discord.Color.green())
+                embed.add_field(name="Original Suggestion", value=suggestion_content, inline=False)
+                embed.add_field(name="Server Note", value=random_approved_message, inline=False)
+                embed.add_field(name="Original Suggestion", value=f"To view the original suggestion click [HERE]({message.jump_url}).")
+                embed.set_footer(text=f"Approved by: {member.display_name}")
+                await approved_channel.send(embed=embed)
+
+            elif str(payload.emoji) == '❌':
+                # Handle Decline
+                member = guild.get_member(payload.user_id)
+                moderator_role = discord.utils.get(guild.roles, name="Moderator")
+
+                if moderator_role in member.roles:
+                    # Prompt the moderator to provide a reason via DM
+                    try:
+                        reason_prompt_embed = discord.Embed(
+                            title="Decline Reason Prompt",
+                            description="Please provide a reason for declining the suggestion:",
+                            color=discord.Color.red()
+                        )
+                        dm_prompt = await member.send(embed=reason_prompt_embed)
+
+                        reason_message = await client.wait_for(
+                            'message',
+                            timeout=120.0,
+                            check=lambda m: m.author == member and m.guild is None
+                        )
+
+                        declined_reason = reason_message.content
+                    except asyncio.TimeoutError:
+                        timeout_embed = discord.Embed(
+                            title="Decline Reason Prompt Timeout",
+                            description="No reason provided. Cancelling the decline process.",
+                            color=discord.Color.red()
+                        )
+                        await member.send(embed=timeout_embed)
+                        return
+                else:
+                    # Handle Decline without reason from a non-moderator
+                    declined_messages_file = os.path.join('Bot Messages/', 'declined_messages.txt')
+                    with open(declined_messages_file, 'r') as file:
+                        declined_messages = file.readlines()
+                        random_declined_message = random.choice(declined_messages).strip()
+
+                    declined_reason = random_declined_message
+
+                declined_channel = client.get_channel(declined_channel_id)
+
+                suggestion_content = message.embeds[0].description
+                embed = discord.Embed(title="Declined Suggestion", color=discord.Color.red())
+                embed.add_field(name="Original Suggestion", value=suggestion_content, inline=False)
+                embed.add_field(name="Declined Reason", value=declined_reason, inline=False)
+                embed.add_field(name="Original Suggestion", value=f"To view the original suggestion click [HERE]({message.jump_url}).")
+                embed.set_footer(text=f"Declined by: {member.display_name}")
+                await declined_channel.send(embed=embed)
 
 # Create Polls Command
 @client.command()
-async def poll(ctx, *, question):
+async def poll(ctx, *, question_and_options):
+    # Define the poll duration (24 hours)
+    poll_duration = 24 * 60 * 60  # 24 hours in seconds
+
+    # Create a list of number emojis
+    number_emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣']
+    # Split the question and options
+    question, *options = question_and_options.split('/')
+
+    # Create the poll message with number emojis
+    poll_message = f"**{question.strip()}**\n\n"
+    for i, option in enumerate(options[:9]):
+        emoji = number_emojis[i]
+        poll_message += f"{emoji} - {option.strip()}\n"
+
+    # Send the poll message to the specified channel
     poll_channel = client.get_channel(poll_channel_id)
-    
     if poll_channel:
-        embed = discord.Embed(title="Server Poll", description=question, color=discord.Color.red())
-        embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
-        embed.add_field(name="Everyone can Vote in Polls!", value="✅ Yes    ❌ No", inline=False)
-        message = await poll_channel.send(embed=embed)
-        await message.add_reaction('✅')
-        await message.add_reaction('❌')
-        await ctx.message.delete()
-    else:
-        await ctx.send("Poll channel not found.")
+        poll_embed = discord.Embed(title=":bar_chart: Server Poll", description=poll_message, color=discord.Color.blue())
+        poll_embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar.url)
+        poll_embed.set_footer(text="React with the corresponding emoji to vote")
+
+        # Send the poll message and store the message object
+        poll_embed_message = await poll_channel.send(embed=poll_embed)
+
+        # Add number reactions to the poll message
+        for i, emoji in enumerate(number_emojis[:len(options)]):
+            await poll_embed_message.add_reaction(emoji)
+
+        # Dictionary to store votes for each option
+        votes = {emoji: 0 for emoji in number_emojis[:len(options)]}
+
+        # Event listener for reaction adds
+        @client.event
+        async def on_reaction_add(reaction, user):
+            nonlocal votes
+            if reaction.message.id == poll_embed_message.id and user != client.user and str(reaction.emoji) in votes:
+                votes[str(reaction.emoji)] += 1
+
+        # Wait for the poll duration
+        await asyncio.sleep(poll_duration)
+
+        # Get the total votes
+        total_votes = sum(votes.values())
+
+        # Sort options by number of votes
+        sorted_options = sorted(votes.items(), key=lambda x: x[1], reverse=True)
+
+        # Create the poll result message
+        result_message = f"**Poll Results for \"{question.strip()}\"**\n\n"
+        for i, (emoji, votes_count) in enumerate(sorted_options):
+            option_index = int(emoji.split('')[0]) - 1
+            result_message += f"{i+1}. {options[option_index].strip()} - {votes_count} votes\n"
+
+        # Send the poll result message to the specified channel
+        result_channel = client.get_channel(result_channel_id)
+        if result_channel:
+            result_embed = discord.Embed(title=":bar_chart: Poll Results", description=result_message, color=discord.Color.green())
+            result_embed.add_field(name="Original Poll", value=f"To view the original poll click [HERE]({poll_embed_message.jump_url}).")
+            await result_channel.send(embed=result_embed)
 
 ### TICKET COMMANDS ###
 
@@ -519,23 +767,65 @@ class FriendCommands(commands.Cog):
         await ctx.send(embed=embed)
         await ctx.message.delete()
     
-    # Create Polls Command
+# poll_friends command
     @commands.command()
     @commands.has_role(friend_role_name)
-    async def poll_friends(Self, ctx, *, question):
-        poll_channel = client.get_channel(poll_friends_channel_id)
-    
+    async def poll_friends(self, ctx, *, question_and_options):
+        # Define the poll duration (24 hours)
+        poll_duration = 24 * 60 * 60  # 24 hours in seconds
+
+        # Create a list of number emojis
+        number_emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣']
+         # Split the question and options
+        question, *options = question_and_options.split('/')
+
+        # Create the poll message with number emojis
+        poll_message = f"**{question.strip()}**\n\n"
+        for i, option in enumerate(options[:9]):
+            emoji = number_emojis[i]
+            poll_message += f"{emoji} - {option.strip()}\n"
+
+        # Send the poll message to the specified channel
+        poll_channel = self.client.get_channel(poll_friends_channel_id)
         if poll_channel:
-            embed = discord.Embed(title="Server Poll", description=question, color=discord.Color.red())
-            embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
-            embed.add_field(name="Everyone can vote!", value="✅ Yes    ❌ No", inline=False)
-            message = await poll_channel.send(embed=embed)
-            await message.add_reaction('✅')
-            await message.add_reaction('❌')
-            await ctx.message.delete()
+            poll_embed = discord.Embed(title=":bar_chart: Friend Poll", description=poll_message, color=discord.Color.blue())
+            poll_embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar.url)
+            poll_embed.set_footer(text="React with the corresponding emoji to vote")
+            poll_embed_message = await poll_channel.send(embed=poll_embed)
+
+            # Add number reactions to the poll message
+            for i, emoji in enumerate(number_emojis[:len(options)]):
+                try:
+                    await poll_embed_message.add_reaction(emoji)
+                except Exception as e:
+                    print("Error adding reaction:", e)
+
+            # Wait for the specified poll duration
+            await asyncio.sleep(poll_duration)
+
+            # Fetch the poll message again to get updated reactions
+            poll_embed_message = await poll_channel.fetch_message(poll_embed_message.id)
+
+            # Update the poll message with the number of votes for each option
+            poll_results = {}
+            for reaction in poll_embed_message.reactions:
+                emoji_index = number_emojis.index(str(reaction.emoji))
+                if emoji_index != -1:
+                    poll_results[f"{options[emoji_index].strip()}"] = reaction.count - 1  # Exclude bot's own reaction
+
+            # Construct the poll results message
+            results_message = "**Poll Results:**\n\n"
+            for option, count in poll_results.items():
+                results_message += f"{option}: {count} vote(s)\n"
+
+            # Send the poll results message
+            poll_results_embed = discord.Embed(title=":first_place: Poll Results", description=results_message, color=discord.Color.green())
+            await poll_channel.send(embed=poll_results_embed)
+
+            # Delete the original poll message
+            await poll_embed_message.delete()
         else:
             await ctx.send("Poll channel not found.")
-
 
     # Game Invite Command
     @commands.command()
@@ -692,6 +982,122 @@ class Moderation(commands.Cog):
             except Exception as e:
                 await self.send_error_message(ctx, f"An error occurred: {e}")
             await ctx.message.delete()
+
+### SERVER CUSTOMIZATION COMMANDS ###
+
+role_options = {
+    "color": {
+        "message": "Server Color Selection",
+        "description": "Color Key:",
+        "note": "Pick 1 color at a time.",
+        "options": {
+            "🔴": {"name": "`Red`", "role_id": 1036871222987857930},
+            "🟡": {"name": "`Yellow`", "role_id": 1036871950464729128},
+            "🟢": {"name": "`Green`", "role_id": 1036872280103452782},
+            "🔵": {"name": "`Blue`", "role_id": 1036872513654894602},
+            "🟣": {"name": "`Purple`", "role_id": 1036872927469117450}
+        }
+    },
+
+    "game": {
+        "message": "Game Selection",
+        "description": "Server Game Options:",
+        "note": "Select all the games you want to be apart of!",
+        "options": {
+            "🚀": {"name": "`Lethal Company`", "role_id": 1193313172376015058},
+            "🧙‍♀️": {"name": "`Baldur's Gate 3`", "role_id": 1193312758721159208},
+            "🕰️": {"name": "`Blood on The Clocktower`", "role_id": 1154988413871730688},
+            "🐔": {"name": "`Clash of Clans (COC)`", "role_id": 1184233316195516466},
+            "🌀": {"name": "`Splitgate`", "role_id": 1193340302782648510}
+        }
+    },
+
+    "free_game": {
+        "message": "Free Game and Update Channels",
+        "description": "Channel Options:",
+        "note": "Game updates only support 🚀 and 🧙‍♀️.",
+        "options": {
+            "🆓": {"name": "`Free Games`", "role_id": 1197633716256776243},
+            "🔔": {"name": "`Game Updates`", "role_id": 1197621406175866981}
+        }
+    }
+}
+
+message_ids = {
+    "color_message_id": 1208782052317470791,
+    "game_message_id": 1208782064208449647,
+    "free_game_message_id": 1208782075633868900
+}
+
+# Define the customize_server command
+@client.command()
+async def customize_server(ctx):
+    for role_type, data in role_options.items():
+        await send_role_selection_message(ctx, role_type, data)
+
+# Define the function to send role selection messages
+async def send_role_selection_message(ctx, role_type, data, footer_text="React with the emojis to make your selection!"):
+    color = get_embed_color(role_type)
+    embed = discord.Embed(title=data["message"], color=color)
+    embed.add_field(name="Note:", value=data['note'], inline=False)
+    embed.add_field(name=data["description"], value="\n".join([f"{emoji} - {option['name']}" for emoji, option in data["options"].items()]), inline=False)
+    embed.set_footer(text=footer_text)
+    message = await ctx.send(embed=embed)
+
+    # Store the message ID
+    message_ids[f"{role_type}_message_id"] = message.id
+    
+    # Add reaction emojis
+    for emoji in data["options"].keys():
+        await message.add_reaction(emoji)
+
+# Function to get embed color based on role type
+def get_embed_color(role_type):
+    if role_type == "color":
+        return discord.Color.red()
+    elif role_type == "game":
+        return discord.Color.blue()
+    elif role_type == "free_game":
+        return discord.Color.yellow()
+        
+# Define the event handler for raw reaction adds
+@client.event
+async def on_raw_reaction_add(payload):
+    if payload.member.bot:
+        return
+    
+    await handle_raw_reaction(payload)
+
+# Define the event handler for raw reaction removals
+@client.event
+async def on_raw_reaction_remove(payload):
+    await handle_raw_reaction(payload)
+
+async def handle_raw_reaction(payload):
+    guild = client.get_guild(payload.guild_id)
+    if guild is None:
+        return
+    if payload.member is None:
+        member = await guild.fetch_member(payload.user_id)
+    else:
+        member = payload.member
+    if member.bot:
+        return
+    for role_type, data in role_options.items():
+        if payload.message_id == message_ids.get(f"{role_type}_message_id"):
+
+            emoji_name = payload.emoji.name if payload.emoji.name else str(payload.emoji)
+
+            role_id = data["options"].get(emoji_name, {}).get("role_id")
+
+            if role_id:
+                role = discord.utils.get(guild.roles, id=role_id)
+                if role:
+                    if payload.event_type == 'REACTION_ADD':
+                        await member.add_roles(role)
+                        
+                    elif payload.event_type == 'REACTION_REMOVE':
+                        await member.remove_roles(role)
 
 # Bot Token
 client.run('YOUR_DISCORD_BOT_TOKEN')
