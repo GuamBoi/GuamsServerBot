@@ -891,7 +891,7 @@ class Moderation(commands.Cog):
             embed = discord.Embed(title="Special Moderator Commands", color=discord.Color.red())
             embed.add_field(name=":wastebasket: !delete_ticket", value="Deletes the ticket you are responding to.", inline=False)
             embed.add_field(name=":scroll: !log_ticket", value="Logs the ticket you are responding to.", inline=False)
-            embed.add_field(name=":broom: !clear", value="Clears the entire chat that you used in the command in.", inline=False)
+            embed.add_field(name=":broom: !clear", value="Clears the entire chat the command was used in.", inline=False)
             embed.add_field(name=":hourglass: !timeout <username> <time in seconds> <reason>", value="Puts a user in 'timeout' for a set duration of time.", inline=False)
             embed.add_field(name="!:boot: kick <username> <reason>", value="Kicks a user from the server", inline=False)
             embed.add_field(name=":no_entry_sign: !ban <username> <reason>", value="Bans a user from the server", inline=False)
