@@ -176,6 +176,14 @@ commands_data = {
         'usage': 'Only members with the @Moderator roll can use this command',
         'channels': 'This command works in any channel!'
     },
+    '!clear': {
+        'title': 'The Clear Command',
+        'command': '`!clear`',
+        'description': 'This command will clear EVERY message from the channel it was used in. When this command is used it will pop up a `Confirmation` message that will expire 60 seconds after the command is used if the message expires the channel will not be cleared. \n Please Note: Only other Moderators can react to the confirmation message.',
+        'usage': 'Only members with the @Moderator roll can use this command',
+        'channels': 'This command works in any channel',
+        'example': '`!ban @Guamboi This is my server now!`'
+    },
     '!delete_ticket': {
         'title': 'The Delete Ticket Command',
         'command': '`!delete_ticket`',
