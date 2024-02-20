@@ -891,12 +891,73 @@ class Moderation(commands.Cog):
             embed = discord.Embed(title="Special Moderator Commands", color=discord.Color.red())
             embed.add_field(name=":wastebasket: !delete_ticket", value="Deletes the ticket you are responding to.", inline=False)
             embed.add_field(name=":scroll: !log_ticket", value="Logs the ticket you are responding to.", inline=False)
+            embed.add_field(name=":broom: !clear", value="Clears the entire chat that you used in the command in.", inline=False)
             embed.add_field(name=":hourglass: !timeout <username> <time in seconds> <reason>", value="Puts a user in 'timeout' for a set duration of time.", inline=False)
             embed.add_field(name="!:boot: kick <username> <reason>", value="Kicks a user from the server", inline=False)
             embed.add_field(name=":no_entry_sign: !ban <username> <reason>", value="Bans a user from the server", inline=False)
             embed.set_footer(text=f"Bot Version: {bot_version}")  # Make sure bot_version is defined
             await ctx.send(embed=embed)
         await ctx.message.delete()
+
+    # Clear Command
+    @commands.command()
+    async def clear(self, ctx):
+        if await self.check_permissions(ctx):
+            # Check if the command was used in a guild (server)
+            if ctx.guild:
+                # Create an embed for the confirmation message
+                embed = discord.Embed(
+                    title="Clear Messages Confirmation",
+                    description="Are you sure you want to clear all messages in this channel?",
+                    color=discord.Color.blue()
+                )
+                embed.set_footer(text=f"Requested by {ctx.author.display_name}")
+
+                # Send the embed as the confirmation message
+                confirmation_message = await ctx.send(embed=embed)
+
+                # Add reaction options
+                await confirmation_message.add_reaction('✅')  # Check mark
+                await confirmation_message.add_reaction('❌')  # Cross mark
+
+                def check(reaction, user):
+                    return user == ctx.author and str(reaction.emoji) in ['✅', '❌']
+
+                try:
+                    reaction, _ = await self.client.wait_for('reaction_add', timeout=30.0, check=check)
+
+                    if str(reaction.emoji) == '✅':
+                        # Clear all messages in the channel
+                        await ctx.channel.purge()
+                    else:
+                        # Cancel the action
+                        embed = discord.Embed(
+                            description="Clear operation canceled.",
+                            color=discord.Color.red()
+                        )
+                        await ctx.send(embed=embed)
+                except asyncio.TimeoutError:
+                    # Timeout if the user doesn't react within 30 seconds
+                    embed = discord.Embed(
+                        description="Clear operation timed out. No messages were cleared.",
+                        color=discord.Color.red()
+                    )
+                    await ctx.send(embed=embed)
+
+                # Delete the confirmation message (if it still exists)
+                try:
+                    await confirmation_message.delete()
+                except discord.errors.NotFound:
+                    pass  # Confirmation message was already deleted
+                except Exception as e:
+                    print(f"An error occurred while deleting the confirmation message: {e}")
+            else:
+                # If the command was used in a private message (DM), send an error message
+                embed = discord.Embed(
+                    description="This command can only be used in a server channel.",
+                    color=discord.Color.red()
+                )
+                await ctx.send(embed=embed)
 
     # Log Ticket Command
     @commands.command()
