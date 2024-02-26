@@ -1160,5 +1160,141 @@ async def handle_raw_reaction(payload):
                     elif payload.event_type == 'REACTION_REMOVE':
                         await member.remove_roles(role)
 
+# WORDLE CODE
+WordleEmpty = "<:WordleEmpty:1209440570376855572>"
+WordleGray = "<:WordleGray:1209457732831281153>"
+WordleGreen = "<:WordleGreen:1209457589881012284>"
+WordleYellow = "<:WordleYellow:1209457878746923029>"
+
+def read_word_list():
+    with open("wordle_words.txt", "r") as file:
+        words = file.read().splitlines()
+    return words
+
+def generate_secret_word():
+    words = read_word_list()
+    return random.choice(words)
+
+game_states = {}
+user_scores = {}
+user_streaks = {}
+
+# Wordle Commands
+@client.event
+async def on_message(message):
+    global game_states
+    global user_scores
+    global user_streaks
+
+    if message.author == client.user:
+        return
+
+    if message.content.startswith('!wordle'):
+        if message.author.id in game_states:
+            embed = discord.Embed(title="Error", description="You already have an active game. Finish it before starting a new one.")
+            error_message = await message.channel.send(embed=embed)
+            await asyncio.sleep(15)
+            await error_message.delete()
+            return
+
+        secret_word = generate_secret_word()
+        game_states[message.author.id] = {'secret_word': secret_word, 'attempts': 6, 'guesses': []}
+        game_embed = discord.Embed(title="Wordle", description=f"Guess the 5-letter word by typing `!guess <word>`.")
+        game_message = await message.channel.send(embed=game_embed)
+        game_states[message.author.id]['game_message'] = game_message
+
+    elif message.content.startswith('!guess'):
+        author_id = message.author.id
+        if author_id not in game_states:
+            embed = discord.Embed(title="Error", description="Please start a game using !wordle command first.")
+            error_message = await message.channel.send(embed=embed)
+            await asyncio.sleep(15)
+            await error_message.delete()
+            await message.delete()  # Delete the !guess command message
+            return
+
+        game_state = game_states[author_id]
+
+        guess = message.content.split(' ')[1].lower().strip()  # Strip leading/trailing whitespace
+        if len(guess) != 5 or not guess.isalpha():
+            embed = discord.Embed(title="Error", description="Invalid guess. Please enter a 5-letter word.")
+            error_message = await message.channel.send(embed=embed)
+            await asyncio.sleep(15)
+            await error_message.delete()
+            await message.delete()  # Delete the !guess command message
+            return
+
+        game_state['guesses'].append(guess)
+        game_state['attempts'] -= 1
+        feedback = get_feedback(guess, game_state['secret_word'])
+        feedback_message = ""
+        for char in feedback:
+            if char == "correct":
+                feedback_message += WordleGreen
+            elif char == "misplaced":
+                feedback_message += WordleYellow
+            else:
+                feedback_message += WordleGray
+        feedback_embed = discord.Embed(title="Feedback", description=feedback_message)
+
+        game_embed = game_state['game_message'].embeds[0]
+        game_embed.description += f"\n{feedback_message} - {guess}"
+        game_embed.set_footer(text=f"You have {game_state['attempts']} attempts left.")
+        await game_state['game_message'].edit(embed=game_embed)
+
+        if guess == game_state['secret_word'].strip():  # Strip leading/trailing whitespace
+            embed = discord.Embed(title="Congratulations!", description="You guessed the word correctly.")
+            embed.add_field(name="The secret word was", value=game_state['secret_word'], inline=False)
+            await message.channel.send(embed=embed)
+            # Update user scores and streaks
+            user_scores[author_id] = user_scores.get(author_id, 0) + 1
+            user_streaks[author_id] = user_streaks.get(author_id, 0) + 1
+            del game_states[author_id]
+        else:
+            if game_state['attempts'] == 0:
+                embed = discord.Embed(title="Game Over", description="You have exhausted all attempts. Start a new game using `!wordle`.")
+                embed.add_field(name="The secret word was", value=game_state['secret_word'], inline=False)
+                await message.channel.send(embed=embed)
+                # Reset streak on loss
+                user_streaks[author_id] = 0
+                del game_states[author_id]
+                await message.delete()  # Delete the !guess command message
+                return
+
+        # Delete the guess command message
+        await message.delete()
+
+# Calculates Guess Feedback
+def get_feedback(guess, secret_word):
+    feedback = []
+    guess = guess.lower()  # Convert guess to lowercase
+    secret_word = secret_word.lower()  # Convert secret word to lowercase
+    
+    # Count the occurrences of each letter in the guess and the secret word
+    guess_counts = collections.Counter(guess)
+    secret_counts = collections.Counter(secret_word)
+    
+    # Iterate through each letter in the guess
+    for i in range(len(guess)):
+        if guess[i] == secret_word[i]:
+            # If the guessed letter matches the corresponding letter in the secret word
+            feedback.append("correct")
+            # Decrement the count of the guessed letter in both guess and secret word
+            guess_counts[guess[i]] -= 1
+            secret_counts[guess[i]] -= 1
+        else:
+            # If the guessed letter does not match the corresponding letter in the secret word
+            feedback.append("incorrect")
+
+    # Check for correct letters in the wrong positions
+    for i in range(len(guess)):
+        if guess[i] != secret_word[i] and guess[i] in secret_word:
+            # If the guessed letter exists in the secret word but is not in the correct position
+            if secret_counts[guess[i]] > 0:
+                feedback[i] = "misplaced"
+                secret_counts[guess[i]] -= 1
+
+    return feedback
+
 # Bot Token
 client.run('YOUR_DISCORD_BOT_TOKEN')
