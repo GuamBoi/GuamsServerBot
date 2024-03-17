@@ -4,16 +4,21 @@ from discord.ext import commands
 
 # Other Imports
 from command_explanations import commands_data
-from discord.ext.commands import Command
+from discord.ext.commands import command
 from discord.ext.commands import Cog
+from discord import FFmpegPCMAudio
+from collections import deque
 import random
 import logging
 import os
 import asyncio
+import collections
 
 # Initialize the bot with intents
 intents = discord.Intents.all()
 intents.voice_states = True
+intents.messages = True
+intents.reactions = True
 
 #Command Prefix
 client = commands.Bot(command_prefix='!', intents=intents)
@@ -72,8 +77,8 @@ invite_friend_channel_id = 980706628540170282
 poll_friends_channel_id = 980706628540170282
 
 # Bot Path Info
-base_path = '/home/kali/GuamsServerBot/'
-ticket_logs_folder = '/home/kali/GuamsServerBot/Ticket Logs/'
+base_path = '/home/guam/GuamsServerBot/'
+ticket_logs_folder = '/home/guam/GuamsServerBot/Ticket Logs/'
 message_folder = 'Bot Messages/'
 ticket_messages = load_random_messages(os.path.join(base_path, message_folder, 'ticket_messages.txt'))
 timer_messages = load_random_messages(os.path.join(base_path, message_folder, 'timer_messages.txt'))
@@ -181,7 +186,7 @@ async def on_member_remove(member):
 
 ### COMMAND LISTS - FRIEND AND MOD LISTS ###
 
-#Command List
+# !commands
 @client.command()
 async def commands(ctx):
     embed = discord.Embed(title="Server Commands", color=discord.Color.red())
@@ -194,12 +199,13 @@ async def commands(ctx):
     embed.add_field(name=":game_die: !dice_commands", value="Lists all the dice commands", inline=False)
     embed.add_field(name=":loud_sound: !voice_commands", value="Lists all the Voice Chat Commands", inline=False)
     embed.add_field(name=":crown: !roll_commands", value="A list of Roll Specific Commands", inline=False)
+    embed.add_field(name=":video_game: !game_commands", value="Lists all the Channel Game Commands", inline=False)
     embed.add_field(name=":sos: !help_commands", value="Opens the Command Help Menu", inline=False)
     embed.set_footer(text=f"Bot Version: {bot_version}")
     await ctx.send(embed=embed)
     await ctx.message.delete()
 
-# Voice Command List
+# !voice_commands
 @client.command()
 async def voice_commands(ctx):
     embed = discord.Embed(title="Voice Chat Commands", color=discord.Color.red())
@@ -208,7 +214,7 @@ async def voice_commands(ctx):
     await ctx.send(embed=embed)
     await ctx.message.delete()
 
-# Dice Command List
+# !dice_commands
 @client.command()
 async def dice_commands(ctx):
     embed = discord.Embed(title="Dice Commands", color=discord.Color.red())
@@ -227,6 +233,17 @@ async def roll_commands(ctx):
     embed = discord.Embed(title="Roll Specific Commands", color=discord.Color.red())
     embed.add_field(name=":crown: !friend_commands", value="Lists the Special @Friend Commands", inline=False)
     embed.add_field(name=":flag_gu: !mod_commands", value="Lists the Special @Moderator Commands", inline=False)
+    await ctx.send(embed=embed)
+    await ctx.message.delete()
+    
+# !game_commands
+@client.command()
+async def game_commands(ctx):
+    embed = discord.Embed(title="Server Game Commands", color=discord.Color.red())
+    embed.add_field(name=":abcd: !wordle", value="Starts Your own Wordle Game", inline=False)
+    embed.add_field(name=":grey_question: !guess <word>", value="Makes a Guess to YOUR wordle Game", inline=False)
+    embed.add_field(name=":fire: !wordle_streaks", value="Shows all Current Player Streaks.", inline=False)
+    embed.add_field(name=":red_circle: !connect4 <@opponents_username>", value="Starts a Connect4 Game Between You and the Tagged User", inline=False)
     await ctx.send(embed=embed)
     await ctx.message.delete()
 
@@ -402,180 +419,6 @@ async def coinflip(ctx):
         await send_embed(ctx, "Coin Flip", "No messages available for coin flipping.")
     await ctx.message.delete()
 
-### SUGGESTION AND POLL COMMANDS ###
-
-@client.command()
-async def suggest(ctx, *, question):
-    print(f'INFO:__main__:Suggestion created by {ctx.author.name}: {question}')
-    suggestion_channel = client.get_channel(suggestion_channel_id)
-
-    if not suggestion_channel:
-        await ctx.send("Suggestion channel not found.")
-        return
-
-    try:
-        default_avatar_url = "https://example.com/default_avatar.png"  # Define your default avatar URL here
-
-        embed = discord.Embed(title="Server Suggestion", description=question, color=discord.Color.blue())
-        embed.add_field(name="Reaction Key", value="Voting Reactions: `👍 = Yes` / `👎 = No` \n Mod Reactions: `✅ = Approve` / `❌ = Decline`", inline=False)
-
-        avatar_url = ctx.author.avatar.url if ctx.author.avatar else default_avatar_url
-        embed.set_footer(text=f"Suggested by {ctx.author.name}", icon_url=avatar_url)  # Using the username in the footer
-
-        message = await suggestion_channel.send(embed=embed)
-        await message.add_reaction('👍')
-        await message.add_reaction('👎')
-        await message.add_reaction('✅')  # Approval
-        await message.add_reaction('❌')  # Decline
-
-        success_embed = discord.Embed(title="New Server Suggestion", description=f"{ctx.author.mention} created a new server suggestion! Go vote on it [HERE]({message.jump_url})!", color=discord.Color.green())
-        await ctx.send(embed=success_embed)
-    except Exception as e:
-        error_embed = discord.Embed(title="Error", description=f"An error occurred: {e}", color=discord.Color.red())
-        await ctx.send(embed=error_embed)
-
-@client.event
-async def on_raw_reaction_add(payload):
-    if payload.channel_id == suggestion_channel_id:
-        suggestion_channel = client.get_channel(suggestion_channel_id)
-        message = await suggestion_channel.fetch_message(payload.message_id)
-        guild = client.get_guild(payload.guild_id)
-        member = guild.get_member(payload.user_id)
-
-        # Check if the reacting member has the Moderator role
-        moderator_role = discord.utils.get(guild.roles, name="Moderator")
-        is_moderator = moderator_role in member.roles if moderator_role else False
-
-        if is_moderator and str(payload.emoji) in ['✅', '❌']:
-            # Only moderators can approve or decline suggestions
-            if str(payload.emoji) == '✅':
-                # Handle Approval
-                approved_messages_file = os.path.join('Bot Messages/', 'approved_messages.txt')
-                with open(approved_messages_file, 'r') as file:
-                    approved_messages = file.readlines()
-                    random_approved_message = random.choice(approved_messages).strip()
-                approved_channel = client.get_channel(approved_channel_id)
-
-                suggestion_content = message.embeds[0].description
-                embed = discord.Embed(title=":white_check_mark: Approved Suggestion", color=discord.Color.green())
-                embed.add_field(name="Original Suggestion", value=suggestion_content, inline=False)
-                embed.add_field(name="Server Note", value=random_approved_message, inline=False)
-                embed.add_field(name="Original Suggestion", value=f"To view the original suggestion click [HERE]({message.jump_url}).")
-                embed.set_footer(text=f"Approved by: {member.display_name}")
-                await approved_channel.send(embed=embed)
-
-            elif str(payload.emoji) == '❌':
-                # Handle Decline
-                member = guild.get_member(payload.user_id)
-                moderator_role = discord.utils.get(guild.roles, name="Moderator")
-
-                if moderator_role in member.roles:
-                    # Prompt the moderator to provide a reason via DM
-                    try:
-                        reason_prompt_embed = discord.Embed(
-                            title="Decline Reason Prompt",
-                            description="Please provide a reason for declining the suggestion:",
-                            color=discord.Color.red()
-                        )
-                        dm_prompt = await member.send(embed=reason_prompt_embed)
-
-                        reason_message = await client.wait_for(
-                            'message',
-                            timeout=120.0,
-                            check=lambda m: m.author == member and m.guild is None
-                        )
-
-                        declined_reason = reason_message.content
-                    except asyncio.TimeoutError:
-                        timeout_embed = discord.Embed(
-                            title="Decline Reason Prompt Timeout",
-                            description="No reason provided. Cancelling the decline process.",
-                            color=discord.Color.red()
-                        )
-                        await member.send(embed=timeout_embed)
-                        return
-                else:
-                    # Handle Decline without reason from a non-moderator
-                    declined_messages_file = os.path.join('Bot Messages/', 'declined_messages.txt')
-                    with open(declined_messages_file, 'r') as file:
-                        declined_messages = file.readlines()
-                        random_declined_message = random.choice(declined_messages).strip()
-
-                    declined_reason = random_declined_message
-
-                declined_channel = client.get_channel(declined_channel_id)
-
-                suggestion_content = message.embeds[0].description
-                embed = discord.Embed(title="Declined Suggestion", color=discord.Color.red())
-                embed.add_field(name="Original Suggestion", value=suggestion_content, inline=False)
-                embed.add_field(name="Declined Reason", value=declined_reason, inline=False)
-                embed.add_field(name="Original Suggestion", value=f"To view the original suggestion click [HERE]({message.jump_url}).")
-                embed.set_footer(text=f"Declined by: {member.display_name}")
-                await declined_channel.send(embed=embed)
-
-# Create Polls Command
-@client.command()
-async def poll(ctx, *, question_and_options):
-    # Define the poll duration (24 hours)
-    poll_duration = 24 * 60 * 60  # 24 hours in seconds
-
-    # Create a list of number emojis
-    number_emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣']
-    # Split the question and options
-    question, *options = question_and_options.split('/')
-
-    # Create the poll message with number emojis
-    poll_message = f"**{question.strip()}**\n\n"
-    for i, option in enumerate(options[:9]):
-        emoji = number_emojis[i]
-        poll_message += f"{emoji} - {option.strip()}\n"
-
-    # Send the poll message to the specified channel
-    poll_channel = client.get_channel(poll_channel_id)
-    if poll_channel:
-        poll_embed = discord.Embed(title=":bar_chart: Server Poll", description=poll_message, color=discord.Color.blue())
-        poll_embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar.url)
-        poll_embed.set_footer(text="React with the corresponding emoji to vote")
-
-        # Send the poll message and store the message object
-        poll_embed_message = await poll_channel.send(embed=poll_embed)
-
-        # Add number reactions to the poll message
-        for i, emoji in enumerate(number_emojis[:len(options)]):
-            await poll_embed_message.add_reaction(emoji)
-
-        # Dictionary to store votes for each option
-        votes = {emoji: 0 for emoji in number_emojis[:len(options)]}
-
-        # Event listener for reaction adds
-        @client.event
-        async def on_reaction_add(reaction, user):
-            nonlocal votes
-            if reaction.message.id == poll_embed_message.id and user != client.user and str(reaction.emoji) in votes:
-                votes[str(reaction.emoji)] += 1
-
-        # Wait for the poll duration
-        await asyncio.sleep(poll_duration)
-
-        # Get the total votes
-        total_votes = sum(votes.values())
-
-        # Sort options by number of votes
-        sorted_options = sorted(votes.items(), key=lambda x: x[1], reverse=True)
-
-        # Create the poll result message
-        result_message = f"**Poll Results for \"{question.strip()}\"**\n\n"
-        for i, (emoji, votes_count) in enumerate(sorted_options):
-            option_index = int(emoji.split('')[0]) - 1
-            result_message += f"{i+1}. {options[option_index].strip()} - {votes_count} votes\n"
-
-        # Send the poll result message to the specified channel
-        result_channel = client.get_channel(result_channel_id)
-        if result_channel:
-            result_embed = discord.Embed(title=":bar_chart: Poll Results", description=result_message, color=discord.Color.green())
-            result_embed.add_field(name="Original Poll", value=f"To view the original poll click [HERE]({poll_embed_message.jump_url}).")
-            await result_channel.send(embed=result_embed)
-
 ### TICKET COMMANDS ###
 
 # Create Tickets Command
@@ -585,6 +428,12 @@ async def ticket(ctx):
     category = ctx.guild.get_channel(ticket_category_id)
     if not category or not isinstance(category, discord.CategoryChannel):
         await ctx.send("Ticket category not found.")
+        return
+
+    # Fetch the Moderator role
+    moderator_role = discord.utils.get(ctx.guild.roles, name="Moderator")
+    if not moderator_role:
+        await ctx.send("Moderator role not found.")
         return
 
     # Check if the user already has an open ticket
@@ -597,7 +446,8 @@ async def ticket(ctx):
     overwrites = {
         ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
         ctx.author: discord.PermissionOverwrite(read_messages=True, send_messages=True),
-        ctx.guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True)
+        ctx.guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+        moderator_role: discord.PermissionOverwrite(read_messages=True, send_messages=True)  # Add Moderator role permissions
     }
 
     # Define the name for the ticket channel
@@ -762,70 +612,9 @@ class FriendCommands(commands.Cog):
     async def friend_commands(self, ctx):
         embed = discord.Embed(title="Special Friend Commands", color=discord.Color.red())
         embed.add_field(name=":incoming_envelope: !invite_friends", value="Invites users to play the game your playing in the #friend-chat", inline=False)
-        embed.add_field(name=":bar_chart: !poll_friends", value="Sends a Poll to the #friend-chat", inline=False)
         embed.set_footer(text=f"Bot Version: {bot_version}")
         await ctx.send(embed=embed)
         await ctx.message.delete()
-    
-# poll_friends command
-    @commands.command()
-    @commands.has_role(friend_role_name)
-    async def poll_friends(self, ctx, *, question_and_options):
-        # Define the poll duration (24 hours)
-        poll_duration = 24 * 60 * 60  # 24 hours in seconds
-
-        # Create a list of number emojis
-        number_emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣']
-         # Split the question and options
-        question, *options = question_and_options.split('/')
-
-        # Create the poll message with number emojis
-        poll_message = f"**{question.strip()}**\n\n"
-        for i, option in enumerate(options[:9]):
-            emoji = number_emojis[i]
-            poll_message += f"{emoji} - {option.strip()}\n"
-
-        # Send the poll message to the specified channel
-        poll_channel = self.client.get_channel(poll_friends_channel_id)
-        if poll_channel:
-            poll_embed = discord.Embed(title=":bar_chart: Friend Poll", description=poll_message, color=discord.Color.blue())
-            poll_embed.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar.url)
-            poll_embed.set_footer(text="React with the corresponding emoji to vote")
-            poll_embed_message = await poll_channel.send(embed=poll_embed)
-
-            # Add number reactions to the poll message
-            for i, emoji in enumerate(number_emojis[:len(options)]):
-                try:
-                    await poll_embed_message.add_reaction(emoji)
-                except Exception as e:
-                    print("Error adding reaction:", e)
-
-            # Wait for the specified poll duration
-            await asyncio.sleep(poll_duration)
-
-            # Fetch the poll message again to get updated reactions
-            poll_embed_message = await poll_channel.fetch_message(poll_embed_message.id)
-
-            # Update the poll message with the number of votes for each option
-            poll_results = {}
-            for reaction in poll_embed_message.reactions:
-                emoji_index = number_emojis.index(str(reaction.emoji))
-                if emoji_index != -1:
-                    poll_results[f"{options[emoji_index].strip()}"] = reaction.count - 1  # Exclude bot's own reaction
-
-            # Construct the poll results message
-            results_message = "**Poll Results:**\n\n"
-            for option, count in poll_results.items():
-                results_message += f"{option}: {count} vote(s)\n"
-
-            # Send the poll results message
-            poll_results_embed = discord.Embed(title=":first_place: Poll Results", description=results_message, color=discord.Color.green())
-            await poll_channel.send(embed=poll_results_embed)
-
-            # Delete the original poll message
-            await poll_embed_message.delete()
-        else:
-            await ctx.send("Poll channel not found.")
 
     # Game Invite Command
     @commands.command()
@@ -1069,7 +858,8 @@ role_options = {
             "🧙‍♀️": {"name": "`Baldur's Gate 3`", "role_id": 1193312758721159208},
             "🕰️": {"name": "`Blood on The Clocktower`", "role_id": 1154988413871730688},
             "🐔": {"name": "`Clash of Clans (COC)`", "role_id": 1184233316195516466},
-            "🌀": {"name": "`Splitgate`", "role_id": 1193340302782648510}
+            "🌀": {"name": "`Splitgate`", "role_id": 1193340302782648510},
+            "💀": {"name": "`Dead By Daylight`", "role_id": 1202837366474149898}
         }
     },
 
@@ -1159,112 +949,100 @@ async def handle_raw_reaction(payload):
                         
                     elif payload.event_type == 'REACTION_REMOVE':
                         await member.remove_roles(role)
+                        
+### ECONOMY AND GAMES ###
 
-# WORDLE CODE
+# Economy variables
+game_states = {}
+user_scores = {}
+user_streaks = {}
+players = {}
+
+# Function to save economy values to a file
+def save_economy_values():
+    with open("economy_values.txt", "w") as file:
+        for player_id, player in players.items():
+            file.write(f"{player_id},{player.collection_points},{player.emeralds},{player.rubies}\n")
+
+# Function to load economy values from a file
+def load_economy_values():
+    try:
+        with open("economy_values.txt", "r") as file:
+            for line in file:
+                player_id, cp, emeralds, rubies = line.strip().split(",")
+                player = players.get(int(player_id))
+                if player:
+                    player.collection_points = int(cp)
+                    player.emeralds = int(emeralds)
+                    player.rubies = int(rubies)
+    except FileNotFoundError:
+        # If the file doesn't exist, no data needs to be loaded
+        pass
+        
+# Function to award 1 Collection Point to the winner
+def award_collection_point(player_id):
+    player = players.get(player_id)
+    if player:
+        player.collection_points += 1  # Award 1 Collection Point
+        user_streaks[player_id] = user_streaks.get(player_id, 0) + 1  # Increment player's streak
+        save_economy_values()  # Save updated economy values
+        
+# Inventory command
+@client.command()
+async def inventory(ctx):
+    player = players.get(ctx.author.id)
+    if player:
+        embed = discord.Embed(title=f"{ctx.author.display_name}'s Inventory", color=discord.Color.blue())
+        embed.add_field(name="Collection Points", value=player.collection_points, inline=False)
+        embed.add_field(name="Emeralds", value=player.emeralds, inline=False)
+        embed.add_field(name="Rubies", value=player.rubies, inline=False)
+        await ctx.send(embed=embed)
+    else:
+        await ctx.send("You don't have an inventory yet. Play some games to earn items!")
+
+# Additional commands for buying emeralds and rubies
+@client.command()
+async def buy_emerald(ctx):
+    player = players.get(ctx.author.id)
+    if player and player.collection_points >= 2:
+        player.collection_points -= 2
+        player.emeralds += 2  # Add 2 emeralds to the player's inventory
+        await ctx.send("You have successfully purchased 2 emeralds!")
+        save_economy_values()  # Save updated economy values
+    else:
+        await ctx.send("You don't have enough collection points to buy emeralds.")
+
+@client.command()
+async def buy_ruby(ctx):
+    player = players.get(ctx.author.id)
+    if player and player.emeralds >= 2:
+        player.emeralds -= 2  # Remove 2 emeralds from the player's inventory
+        player.rubies += 1  # Add 1 ruby to the player's inventory
+        await ctx.send("You have successfully purchased 1 ruby!")
+        save_economy_values()  # Save updated economy values
+    else:
+        await ctx.send("You don't have enough emeralds to buy a ruby.")
+
+## WORDLE CODE ##
+
+# Wordle variables
 WordleEmpty = "<:WordleEmpty:1209440570376855572>"
 WordleGray = "<:WordleGray:1209457732831281153>"
 WordleGreen = "<:WordleGreen:1209457589881012284>"
 WordleYellow = "<:WordleYellow:1209457878746923029>"
 
+# Read word list
 def read_word_list():
     with open("wordle_words.txt", "r") as file:
         words = file.read().splitlines()
     return words
 
+# Generate secret word
 def generate_secret_word():
     words = read_word_list()
     return random.choice(words)
 
-game_states = {}
-user_scores = {}
-user_streaks = {}
-
-# Wordle Commands
-@client.event
-async def on_message(message):
-    global game_states
-    global user_scores
-    global user_streaks
-
-    if message.author == client.user:
-        return
-
-    if message.content.startswith('!wordle'):
-        if message.author.id in game_states:
-            embed = discord.Embed(title="Error", description="You already have an active game. Finish it before starting a new one.")
-            error_message = await message.channel.send(embed=embed)
-            await asyncio.sleep(15)
-            await error_message.delete()
-            return
-
-        secret_word = generate_secret_word()
-        game_states[message.author.id] = {'secret_word': secret_word, 'attempts': 6, 'guesses': []}
-        game_embed = discord.Embed(title="Wordle", description=f"Guess the 5-letter word by typing `!guess <word>`.")
-        game_message = await message.channel.send(embed=game_embed)
-        game_states[message.author.id]['game_message'] = game_message
-
-    elif message.content.startswith('!guess'):
-        author_id = message.author.id
-        if author_id not in game_states:
-            embed = discord.Embed(title="Error", description="Please start a game using !wordle command first.")
-            error_message = await message.channel.send(embed=embed)
-            await asyncio.sleep(15)
-            await error_message.delete()
-            await message.delete()  # Delete the !guess command message
-            return
-
-        game_state = game_states[author_id]
-
-        guess = message.content.split(' ')[1].lower().strip()  # Strip leading/trailing whitespace
-        if len(guess) != 5 or not guess.isalpha():
-            embed = discord.Embed(title="Error", description="Invalid guess. Please enter a 5-letter word.")
-            error_message = await message.channel.send(embed=embed)
-            await asyncio.sleep(15)
-            await error_message.delete()
-            await message.delete()  # Delete the !guess command message
-            return
-
-        game_state['guesses'].append(guess)
-        game_state['attempts'] -= 1
-        feedback = get_feedback(guess, game_state['secret_word'])
-        feedback_message = ""
-        for char in feedback:
-            if char == "correct":
-                feedback_message += WordleGreen
-            elif char == "misplaced":
-                feedback_message += WordleYellow
-            else:
-                feedback_message += WordleGray
-        feedback_embed = discord.Embed(title="Feedback", description=feedback_message)
-
-        game_embed = game_state['game_message'].embeds[0]
-        game_embed.description += f"\n{feedback_message} - {guess}"
-        game_embed.set_footer(text=f"You have {game_state['attempts']} attempts left.")
-        await game_state['game_message'].edit(embed=game_embed)
-
-        if guess == game_state['secret_word'].strip():  # Strip leading/trailing whitespace
-            embed = discord.Embed(title="Congratulations!", description="You guessed the word correctly.")
-            embed.add_field(name="The secret word was", value=game_state['secret_word'], inline=False)
-            await message.channel.send(embed=embed)
-            # Update user scores and streaks
-            user_scores[author_id] = user_scores.get(author_id, 0) + 1
-            user_streaks[author_id] = user_streaks.get(author_id, 0) + 1
-            del game_states[author_id]
-        else:
-            if game_state['attempts'] == 0:
-                embed = discord.Embed(title="Game Over", description="You have exhausted all attempts. Start a new game using `!wordle`.")
-                embed.add_field(name="The secret word was", value=game_state['secret_word'], inline=False)
-                await message.channel.send(embed=embed)
-                # Reset streak on loss
-                user_streaks[author_id] = 0
-                del game_states[author_id]
-                await message.delete()  # Delete the !guess command message
-                return
-
-        # Delete the guess command message
-        await message.delete()
-
-# Calculates Guess Feedback
+# Calculates guess feedback
 def get_feedback(guess, secret_word):
     feedback = []
     guess = guess.lower()  # Convert guess to lowercase
@@ -1296,5 +1074,344 @@ def get_feedback(guess, secret_word):
 
     return feedback
 
-# Bot Token
-client.run('YOUR_DISCORD_BOT_TOKEN')
+# Wordle command
+@client.command()
+async def wordle(ctx):
+    global game_states
+
+    if ctx.author.id in game_states:
+        embed = discord.Embed(title="Error", description="You already have an active game. Finish it before starting a new one.")
+        error_message = await ctx.send(embed=embed)
+        await asyncio.sleep(15)
+        await error_message.delete()
+        return
+
+    secret_word = generate_secret_word()
+    game_states[ctx.author.id] = {'secret_word': secret_word, 'attempts': 6, 'guesses': []}
+    game_embed = discord.Embed(title="Wordle", description=f"Guess the 5-letter word by typing `!guess <word>`.")
+    game_message = await ctx.send(embed=game_embed)
+    game_states[ctx.author.id]['game_message'] = game_message
+
+# Guess command
+@client.command()
+async def guess(ctx, guess_word: str):
+    global game_states
+    global user_scores
+    global user_streaks
+
+    if ctx.author.id not in game_states:
+        embed = discord.Embed(title="Error", description="Please start a game using !wordle command first.")
+        error_message = await ctx.send(embed=embed)
+        await asyncio.sleep(15)
+        await delete_message_safely(ctx, error_message)
+        return
+
+    game_state = game_states[ctx.author.id]
+
+    guess = guess_word.lower().strip()  # Strip leading/trailing whitespace
+    if len(guess) != 5 or not guess.isalpha():
+        embed = discord.Embed(title="Error", description="Invalid guess. Please enter a 5-letter word.")
+        error_message = await ctx.send(embed=embed)
+        await asyncio.sleep(15)
+        await delete_message_safely(ctx, error_message)
+        return
+
+    game_state['guesses'].append(guess)
+    game_state['attempts'] -= 1
+    feedback = get_feedback(guess, game_state['secret_word'])
+    feedback_message = ""
+    for char in feedback:
+        if char == "correct":
+            feedback_message += WordleGreen
+        elif char == "misplaced":
+            feedback_message += WordleYellow
+        else:
+            feedback_message += WordleGray
+    feedback_embed = discord.Embed(title="Feedback", description=feedback_message)
+
+    game_embed = game_state['game_message'].embeds[0]
+    game_embed.description += f"\n{feedback_message} - {guess}"
+    game_embed.set_footer(text=f"You have {game_state['attempts']} attempts left.")
+    await game_state['game_message'].edit(embed=game_embed)
+
+    if guess == game_state['secret_word'].strip():
+        embed = discord.Embed(title="Congratulations!", description="You guessed the word correctly... :rolling_eyes:")
+        embed.add_field(name="The secret word was:", value=game_state['secret_word'], inline=False)
+        await ctx.send(embed=embed)
+        user_scores[ctx.author.id] = user_scores.get(ctx.author.id, 0) + 1
+        user_streaks[ctx.author.id] = user_streaks.get(ctx.author.id, 0) + 1
+        award_collection_point(ctx.author.id)  # Award Collection Point to the winner
+        del game_states[ctx.author.id]
+
+    else:
+        if game_state['attempts'] == 0:
+            embed = discord.Embed(title="Game Over", description="Womp Womp you suck!!! Start a new game using `!wordle`.")
+            embed.add_field(name="The secret word was:", value=game_state['secret_word'], inline=False)
+            await ctx.send(embed=embed)
+            # Reset streak on loss
+            user_streaks[ctx.author.id] = 0
+            del game_states[ctx.author.id]
+
+    # Delete the guess command message if it's not None
+    if ctx.message:
+        await delete_message_safely(ctx, ctx.message)
+
+async def delete_message_safely(ctx, message):
+    try:
+        await message.delete()
+    except discord.errors.NotFound:
+        print("Error: Message not found. Cannot delete.")
+
+# Wordle Streaks command
+@client.command()
+async def wordle_streaks(ctx):
+    global user_streaks
+
+    # Filter users with streaks greater than 0
+    users_with_streaks = {k: v for k, v in user_streaks.items() if v > 0}
+
+    # Sort users by streaks (highest to lowest)
+    sorted_users = sorted(users_with_streaks.items(), key=lambda x: x[1], reverse=True)
+
+    embed = discord.Embed(title=":fire: Wordle Streaks", color=discord.Color.gold())
+    placement_emojis = ["🥇", "🥈", "🥉"]  # Discord emojis for 1st, 2nd, and 3rd place
+
+    for idx, (user_id, streak) in enumerate(sorted_users):
+        user = ctx.guild.get_member(user_id)
+        placement = f"{idx + 1}."  # Default placement number
+        if idx < len(placement_emojis):
+            placement = placement_emojis[idx]  # Use emoji for 1st, 2nd, and 3rd place
+        if user:
+            embed.add_field(name=f"{placement} {user.display_name}", value=f"Streak: {streak}", inline=False)
+
+    await ctx.send(embed=embed)
+    await ctx.message.delete()
+
+## Connect4 Code ##
+
+# Player class to track players in the game
+class Connect4Player:
+    def __init__(self, member, token_emoji):
+        self.member = member
+        self.token_emoji = token_emoji
+        self.score = 0
+        self.collection_points = 0  # Track collection points for each player
+        self.emeralds = 0  # Track emeralds for each player
+        self.rubies = 0  # Track rubies for each player
+
+# Connect4 game class
+class Connect4Game:
+    def __init__(self, player1, player2):
+        self.board = [[ConnectBoard for _ in range(7)] for _ in range(6)]
+        self.column_heights = [0] * 7  # Tracks the height of each column
+        self.players = [player1, player2]
+        self.turn = 0  # Index of the current player in self.players
+        self.active = True
+        self.winner = None
+
+    async def make_move(self, column, ctx):
+        if not self.active:
+            return "Game is already over."
+        if not 0 <= column < 7:
+            return "Invalid column. Please choose a column between 0 and 6."
+        row = self.column_heights[column]  # Get the next available row in the chosen column
+        if row >= 6:
+            return "Column is full. Please choose another column."
+        self.board[row][column] = self.players[self.turn].token_emoji
+        self.column_heights[column] += 1  # Increase the column height
+        if self.check_winner(row, column):
+            self.active = False
+            self.winner = self.players[self.turn]
+            return None
+        self.turn = 1 - self.turn  # Switch turns
+        return None  # Move successful
+
+    def check_winner(self, row, col):
+        directions = [(1, 0), (0, 1), (1, 1), (1, -1)]
+        for dr, dc in directions:
+            count = 1
+            for i in range(1, 4):
+                r, c = row + i * dr, col + i * dc
+                if 0 <= r < 6 and 0 <= c < 7 and self.board[r][c] == self.board[row][col]:
+                    count += 1
+                else:
+                    break
+            for i in range(1, 4):
+                r, c = row - i * dr, col - i * dc
+                if 0 <= r < 6 and 0 <= c < 7 and self.board[r][c] == self.board[row][col]:
+                    count += 1
+                else:
+                    break
+            if count >= 4:
+                return True
+        return False
+
+# Emoji definitions
+ConnectBoard = "<:ConnectBoard:1213906784821977118>"
+ConnectRed = "<:ConnectRed:1213906783437848616>"
+ConnectYellow = "<:ConnectYellow:1213906785941987399>"
+number_emojis = ["\u0031\u20E3", "\u0032\u20E3", "\u0033\u20E3", "\u0034\u20E3", "\u0035\u20E3", "\u0036\u20E3", "\u0037\u20E3"]
+
+@client.command()
+async def connect4(ctx, opponent: discord.Member):
+    if opponent == ctx.author:
+        await ctx.send("You cannot play against yourself, nerd!")
+        return
+
+    # Initialize player1 and player2 instances, and load their existing economy values if available
+    player1 = players.get(ctx.author.id, Connect4Player(ctx.author, ConnectRed))
+    player2 = players.get(opponent.id, Connect4Player(opponent, ConnectYellow))
+    
+    # Create a new Connect4Game instance with the initialized players
+    game = Connect4Game(player1, player2)
+    
+    # Send initial game message and add number emojis as reactions
+    message = await ctx.send(f"{game.players[game.turn].member.mention}, it's your turn!", embed=create_embed(game))
+    for emoji in number_emojis:
+        await message.add_reaction(emoji)
+
+    # Main game loop
+    while game.active:
+        reaction, user = await client.wait_for('reaction_add', check=lambda r, u: u == game.players[game.turn].member and r.message.id == message.id and str(r.emoji) in number_emojis)
+        column = number_emojis.index(str(reaction.emoji))
+        error = await game.make_move(column, ctx)
+        if error:
+            await ctx.send(error)
+        else:
+            await update_message(message, game)
+            if not game.active:
+                if game.winner:
+                    await add_winning_chip(message, game)
+                    await send_winning_embed(ctx, game)
+                    if game.winner == player1:
+                        player1.score += 1
+                        player1.collection_points += 1  # Award 1 CP for winning Connect 4
+                        save_economy_values()  # Save updated economy values
+                    else:
+                        player2.score += 1
+                        player2.collection_points += 1  # Award 1 CP for winning Connect 4
+                        save_economy_values()  # Save updated economy values
+                else:
+                    await ctx.send("It's a draw!")
+
+async def update_message(message, game):
+    await message.edit(content=f"{game.players[game.turn].member.mention}, it's your turn!", embed=create_embed(game))
+
+async def add_winning_chip(message, game):
+    embed = message.embeds[0]
+    winning_emoji = game.players[game.turn].token_emoji
+    embed.set_field_at(0, name='\u200b', value=embed.fields[0].value.replace(ConnectBoard, winning_emoji))
+
+# Connect4 code
+async def send_winning_embed(ctx, game):
+    winner = game.winner.member.display_name
+    embed = discord.Embed(title="Game Over:", description=f"`{winner}` wins!", color=discord.Color.green())
+    await ctx.send(embed=embed)
+    award_collection_point(game.winner.member.id)  # Award Collection Point to the winner
+
+def create_embed(game):
+    color = discord.Color.red() if game.players[game.turn].token_emoji == ConnectRed else discord.Color.gold()
+    embed = discord.Embed(title="Connect 4", color=color)
+
+    # Generate the game board dynamically based on current state
+    for row in range(5, -1, -1):  # Loop from bottom row to top row
+        row_str = ""
+        for col in range(7):
+            row_str += game.board[row][col]
+        embed.add_field(name="\u200b", value=row_str, inline=False)
+
+    return embed
+
+## CHAT BOT CODE ##
+
+# Define a function to load responses from a text file
+def load_responses(filename):
+    responses = {}
+    try:
+        with open(filename, 'r') as file:
+            for line in file:
+                line = line.strip()
+                if '|' not in line:
+                    continue  # Skip lines without the delimiter
+                input_text, *output_texts = line.split('|')
+                responses[input_text.lower()] = [output_text.strip() for output_text in output_texts]
+    except FileNotFoundError:
+        pass
+    return responses
+
+# Define a function to save responses to a text file
+def save_responses(responses, filename):
+    with open(filename, 'w') as file:
+        for input_text, output_texts in responses.items():
+            for output_text in output_texts:
+                file.write(f"{input_text}|{output_text}\n")
+
+# Command to chat with the bot
+@client.command()
+async def chat(ctx, *input_text):
+    input_text = ' '.join(input_text)
+    responses = load_responses("user_responses.txt")
+    if input_text.lower() in responses:
+        # If the input text exists in responses, get a random response
+        response = random.choice(responses[input_text.lower()])
+        await ctx.send(response)
+    else:
+        # Ask user for a response
+        await ctx.send("I'm not sure how to respond to that. You have 60 seconds to help me reply with a response.")
+
+        try:
+            # Wait for a response from the user
+            response_message = await client.wait_for('message', timeout=60, check=lambda m: m.author == ctx.author and m.channel == ctx.channel)
+            # Add the user-provided response to the dictionary
+            if input_text.lower() in responses:
+                responses[input_text.lower()].append(response_message.content)
+            else:
+                responses[input_text.lower()] = [response_message.content]
+            # Save responses to file
+            save_responses(responses, "user_responses.txt")
+            await ctx.send("Response added successfully!")
+        except asyncio.TimeoutError:
+            await ctx.send("Sorry, you took too long to respond. Please try again later.")
+
+# Command to add a response
+@client.command()
+async def add_response(ctx, input_text, *output_text):
+    input_text = input_text.lower()
+    output_text = ' '.join(output_text)
+    
+    if input_text in user_responses:
+        # Check if the new response already exists for the given input text
+        if output_text in user_responses[input_text]:
+            await ctx.send("This response already exists for the given input.")
+        else:
+            # If the input text already exists, append the new response
+            user_responses[input_text].append(output_text)
+            await ctx.send("Response added successfully!")
+    else:
+        # If the input text doesn't exist, create a new list with the response
+        user_responses[input_text] = [output_text]
+        await ctx.send("Response added successfully!")
+
+@client.event
+async def on_reaction_add(reaction, user):
+    # Check if the reaction is from the bot or the user is the bot
+    if user.bot or reaction.message.author.bot:
+        return
+    if str(reaction.emoji) == '✅':
+        await reaction.message.delete()
+    elif str(reaction.emoji) == '❌':
+        await reaction.message.delete()
+        await user.send("You can help improve my responses by using the command `!add_response <your original input> <new output>`.")
+
+# Command to solve math problems
+@client.command()
+async def calculate(ctx, *, expression):
+    try:
+        result = eval(expression)
+        await ctx.send(f"{expression} = `{result}`")
+    except Exception as e:
+        await ctx.send(f"Error: {e}")
+
+# Run the Discord bot with your token
+load_economy_values()
+client.run('MTIwNTcyODE4MzI5MTQ3ODA1Ng.GnDsAJ.UyTvS0jOyj99c88i5E-uXuu13xepuFfXBC1N8A')
